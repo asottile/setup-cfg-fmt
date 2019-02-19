@@ -105,7 +105,7 @@ This will show up on the pypi project page
 -    License :: OSI Approved :: MIT License
 +    License :: OSI Approved :: MIT License
 +    Programming Language :: Python :: 3
-    Programming Language :: Python :: 3.6
+     Programming Language :: Python :: 3.6
 ```
 
 ## related projects
