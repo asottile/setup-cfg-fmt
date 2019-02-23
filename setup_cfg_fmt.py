@@ -1,5 +1,6 @@
 import argparse
 import configparser
+import glob
 import io
 import os.path
 from typing import Dict
@@ -66,6 +67,15 @@ def _adjacent_filename(setup_cfg: str, filename: str) -> str:
     return os.path.join(os.path.dirname(setup_cfg), filename)
 
 
+def _first_file(setup_cfg: str, prefix: str) -> Optional[str]:
+    prefix = ''.join(f'[{c.swapcase()}{c}]' for c in prefix)
+    path = _adjacent_filename(setup_cfg, prefix)
+    for filename in glob.iglob(f'{path}*'):
+        return filename
+    else:
+        return None
+
+
 def format_file(filename: str) -> bool:
     with open(filename) as f:
         contents = f.read()
@@ -77,9 +87,18 @@ def format_file(filename: str) -> bool:
     cfg['metadata']['name'] = cfg['metadata']['name'].replace('-', '_')
 
     # if README.md exists, set `long_description` + content type
-    if os.path.exists(_adjacent_filename(filename, 'README.md')):
-        cfg['metadata']['long_description'] = 'file: README.md'
-        cfg['metadata']['long_description_content_type'] = 'text/markdown'
+    readme = _first_file(filename, 'readme')
+    if readme is not None:
+        long_description = f'file: {os.path.basename(readme)}'
+        cfg['metadata']['long_description'] = long_description
+
+        tags = identify.tags_from_filename(readme)
+        if 'markdown' in tags:
+            cfg['metadata']['long_description_content_type'] = 'text/markdown'
+        elif 'rst' in tags:
+            cfg['metadata']['long_description_content_type'] = 'text/x-rst'
+        else:
+            cfg['metadata']['long_description_content_type'] = 'text/plain'
 
     # set license fields if a license exists
     license_filename = _adjacent_filename(filename, 'LICENSE')

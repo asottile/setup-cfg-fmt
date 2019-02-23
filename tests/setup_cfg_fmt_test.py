@@ -87,8 +87,18 @@ def test_rewrite(input_s, expected, tmpdir):
     assert setup_cfg.read() == expected
 
 
-def test_adds_long_description_with_readme(tmpdir):
-    tmpdir.join('README.md').write('my project!')
+@pytest.mark.parametrize(
+    ('filename', 'content_type'),
+    (
+        ('README.rst', 'text/x-rst'),
+        ('README.markdown', 'text/markdown'),
+        ('README.md', 'text/markdown'),
+        ('README', 'text/plain'),
+        ('readme.txt', 'text/plain'),
+    ),
+)
+def test_adds_long_description_with_readme(filename, content_type, tmpdir):
+    tmpdir.join(filename).write('my project!')
     setup_cfg = tmpdir.join('setup.cfg')
     setup_cfg.write(
         '[metadata]\n'
@@ -99,11 +109,11 @@ def test_adds_long_description_with_readme(tmpdir):
     assert main((str(setup_cfg),))
 
     assert setup_cfg.read() == (
-        '[metadata]\n'
-        'name = pkg\n'
-        'version = 1.0\n'
-        'long_description = file: README.md\n'
-        'long_description_content_type = text/markdown\n'
+        f'[metadata]\n'
+        f'name = pkg\n'
+        f'version = 1.0\n'
+        f'long_description = file: {filename}\n'
+        f'long_description_content_type = {content_type}\n'
     )
 
 
