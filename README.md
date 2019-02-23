@@ -10,6 +10,19 @@ apply a consistent format to `setup.cfg` files
 
 `pip install setup-cfg-fmt`
 
+## as a pre-commit hook
+
+See [pre-commit](https://github.com/pre-commit/pre-commit) for instructions
+
+Sample `.pre-commit-config.yaml`:
+
+```yaml
+-   repo: https://github.com/asottile/setup-cfg-fmt
+    rev: v0.0.0
+    hooks:
+    -   id: setup-cfg-fmt
+```
+
 ## cli
 
 Consult the help for the latest usage:

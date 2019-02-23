@@ -1,0 +1,7 @@
+-   id: setup-cfg-fmt
+    name: setup-cfg-fmt
+    description: apply a consistent format to `setup.cfg` files
+    entry: setup-cfg-fmt
+    language: python
+    language_version: python3
+    files: '(^|/)setup\.cfg$'
