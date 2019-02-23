@@ -3,7 +3,9 @@ import configparser
 import glob
 import io
 import os.path
+import re
 from typing import Dict
+from typing import Match
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
@@ -67,8 +69,23 @@ def _adjacent_filename(setup_cfg: str, filename: str) -> str:
     return os.path.join(os.path.dirname(setup_cfg), filename)
 
 
+GLOB_PART = re.compile(r'(\[[^]]+\]|.)')
+
+
+def _case_insensitive_glob(s: str) -> str:
+    def cb(match: Match[str]) -> str:
+        match_s = match.group()
+        if len(match_s) == 1:
+            return f'[{match_s.upper()}{match_s.lower()}]'
+        else:
+            inner = ''.join(f'{c.upper()}{c.lower()}' for c in match_s[1:-1])
+            return f'[{inner}]'
+
+    return GLOB_PART.sub(cb, s)
+
+
 def _first_file(setup_cfg: str, prefix: str) -> Optional[str]:
-    prefix = ''.join(f'[{c.swapcase()}{c}]' for c in prefix)
+    prefix = _case_insensitive_glob(prefix)
     path = _adjacent_filename(setup_cfg, prefix)
     for filename in glob.iglob(f'{path}*'):
         return filename
@@ -101,9 +118,9 @@ def format_file(filename: str) -> bool:
             cfg['metadata']['long_description_content_type'] = 'text/plain'
 
     # set license fields if a license exists
-    license_filename = _adjacent_filename(filename, 'LICENSE')
-    if os.path.exists(license_filename):
-        cfg['metadata']['license_file'] = 'LICENSE'
+    license_filename = _first_file(filename, 'licen[sc]e')
+    if license_filename is not None:
+        cfg['metadata']['license_file'] = os.path.basename(license_filename)
 
         license_id = identify.license_id(license_filename)
         if license_id is not None:

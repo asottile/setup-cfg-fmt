@@ -1,6 +1,19 @@
 import pytest
 
+from setup_cfg_fmt import _case_insensitive_glob
 from setup_cfg_fmt import main
+
+
+@pytest.mark.parametrize(
+    ('s', 'expected'),
+    (
+        ('foo', '[Ff][Oo][Oo]'),
+        ('FOO', '[Ff][Oo][Oo]'),
+        ('licen[sc]e', '[Ll][Ii][Cc][Ee][Nn][SsCc][Ee]'),
+    ),
+)
+def test_case_insensitive_glob(s, expected):
+    assert _case_insensitive_glob(s) == expected
 
 
 def test_noop(tmpdir):
@@ -117,8 +130,11 @@ def test_adds_long_description_with_readme(filename, content_type, tmpdir):
     )
 
 
-def test_sets_license_file_if_license_exists(tmpdir):
-    tmpdir.join('LICENSE').write('COPYRIGHT (C) 2019 ME')
+@pytest.mark.parametrize(
+    'filename', ('LICENSE', 'LICENCE', 'LICENSE.md', 'license.txt'),
+)
+def test_sets_license_file_if_license_exists(filename, tmpdir):
+    tmpdir.join(filename).write('COPYRIGHT (C) 2019 ME')
     setup_cfg = tmpdir.join('setup.cfg')
     setup_cfg.write(
         '[metadata]\n'
@@ -129,10 +145,10 @@ def test_sets_license_file_if_license_exists(tmpdir):
     assert main((str(setup_cfg),))
 
     assert setup_cfg.read() == (
-        '[metadata]\n'
-        'name = pkg\n'
-        'version = 1.0\n'
-        'license_file = LICENSE\n'
+        f'[metadata]\n'
+        f'name = pkg\n'
+        f'version = 1.0\n'
+        f'license_file = {filename}\n'
     )
 
 
