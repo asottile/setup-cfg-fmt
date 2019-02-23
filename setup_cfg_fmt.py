@@ -1,8 +1,11 @@
 import argparse
 import configparser
+import glob
 import io
 import os.path
+import re
 from typing import Dict
+from typing import Match
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
@@ -66,6 +69,30 @@ def _adjacent_filename(setup_cfg: str, filename: str) -> str:
     return os.path.join(os.path.dirname(setup_cfg), filename)
 
 
+GLOB_PART = re.compile(r'(\[[^]]+\]|.)')
+
+
+def _case_insensitive_glob(s: str) -> str:
+    def cb(match: Match[str]) -> str:
+        match_s = match.group()
+        if len(match_s) == 1:
+            return f'[{match_s.upper()}{match_s.lower()}]'
+        else:
+            inner = ''.join(f'{c.upper()}{c.lower()}' for c in match_s[1:-1])
+            return f'[{inner}]'
+
+    return GLOB_PART.sub(cb, s)
+
+
+def _first_file(setup_cfg: str, prefix: str) -> Optional[str]:
+    prefix = _case_insensitive_glob(prefix)
+    path = _adjacent_filename(setup_cfg, prefix)
+    for filename in glob.iglob(f'{path}*'):
+        return filename
+    else:
+        return None
+
+
 def format_file(filename: str) -> bool:
     with open(filename) as f:
         contents = f.read()
@@ -77,14 +104,23 @@ def format_file(filename: str) -> bool:
     cfg['metadata']['name'] = cfg['metadata']['name'].replace('-', '_')
 
     # if README.md exists, set `long_description` + content type
-    if os.path.exists(_adjacent_filename(filename, 'README.md')):
-        cfg['metadata']['long_description'] = 'file: README.md'
-        cfg['metadata']['long_description_content_type'] = 'text/markdown'
+    readme = _first_file(filename, 'readme')
+    if readme is not None:
+        long_description = f'file: {os.path.basename(readme)}'
+        cfg['metadata']['long_description'] = long_description
+
+        tags = identify.tags_from_filename(readme)
+        if 'markdown' in tags:
+            cfg['metadata']['long_description_content_type'] = 'text/markdown'
+        elif 'rst' in tags:
+            cfg['metadata']['long_description_content_type'] = 'text/x-rst'
+        else:
+            cfg['metadata']['long_description_content_type'] = 'text/plain'
 
     # set license fields if a license exists
-    license_filename = _adjacent_filename(filename, 'LICENSE')
-    if os.path.exists(license_filename):
-        cfg['metadata']['license_file'] = 'LICENSE'
+    license_filename = _first_file(filename, 'licen[sc]e')
+    if license_filename is not None:
+        cfg['metadata']['license_file'] = os.path.basename(license_filename)
 
         license_id = identify.license_id(license_filename)
         if license_id is not None:
