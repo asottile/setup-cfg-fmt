@@ -5,6 +5,7 @@ import io
 import os.path
 import re
 from typing import Dict
+from typing import List
 from typing import Match
 from typing import Optional
 from typing import Sequence
@@ -93,7 +94,79 @@ def _first_file(setup_cfg: str, prefix: str) -> Optional[str]:
         return None
 
 
-def format_file(filename: str) -> bool:
+def _py3_excluded(min_py3_version: Tuple[int, int]) -> List[Tuple[int, int]]:
+    _, end = min_py3_version
+    return [(3, i) for i in range(end)]
+
+
+def _format_python_requires(
+        minimum: Tuple[int, ...],
+        excluded: List[Tuple[int, ...]],
+) -> str:
+    def _v(x: Tuple[int, ...]) -> str:
+        return '.'.join(str(p) for p in x)
+
+    excluded = sorted(set(excluded))
+    return ', '.join((f'>={_v(minimum)}', *(f'!={_v(v)}.*' for v in excluded)))
+
+
+def _python_requires(
+        setup_cfg: str, *, min_py3_version: Tuple[int, int],
+) -> Optional[str]:
+    cfg = configparser.ConfigParser()
+    cfg.read(setup_cfg)
+    current_value = cfg.get('options', 'python_requires', fallback='')
+    classifiers = cfg.get('metadata', 'classifiers', fallback='')
+
+    minimum: Optional[Tuple[int, ...]] = None
+    excluded: List[Tuple[int, ...]] = []
+
+    def to_ver(s: str) -> Tuple[int, ...]:
+        return tuple(int(p) for p in s.strip().split('.') if p != '*')
+
+    if current_value:
+        for part in current_value.split(','):
+            part = part.strip()
+            if part.startswith('>='):
+                minimum = to_ver(part[2:])
+            elif part.startswith('!='):
+                excluded.append(to_ver(part[2:].strip()))
+            else:  # unrecognized comparison, assume they know what's up
+                return current_value
+
+    tox_ini = _adjacent_filename(setup_cfg, 'tox.ini')
+    if os.path.exists(tox_ini):
+        cfg = configparser.ConfigParser()
+        cfg.read(tox_ini)
+
+        envlist = cfg.get('tox', 'envlist', fallback='')
+        if envlist:
+            for env in envlist.split(','):
+                env = env.strip()
+                env, _, _ = env.partition('-')  # py36-foo
+                if env.startswith('py') and len(env) == 4:
+                    version = to_ver('.'.join(env[2:]))
+                    if minimum is None or version < minimum:
+                        minimum = version
+
+    for classifier in classifiers.strip().splitlines():
+        if classifier.startswith('Programming Language :: Python ::'):
+            version = to_ver(classifier.split()[-1])
+            if len(version) == 2 and (minimum is None or version < minimum):
+                minimum = version
+
+    if minimum is None:
+        return None
+    elif minimum[0] == 2:
+        excluded.extend(_py3_excluded(min_py3_version))
+        return _format_python_requires(minimum, excluded)
+    elif min_py3_version > minimum:
+        return _format_python_requires(min_py3_version, excluded)
+    else:
+        return _format_python_requires(minimum, excluded)
+
+
+def format_file(filename: str, *, min_py3_version: Tuple[int, int]) -> bool:
     with open(filename) as f:
         contents = f.read()
 
@@ -131,6 +204,12 @@ def format_file(filename: str) -> bool:
                 cfg['metadata'].get('classifiers', '').rstrip() +
                 f'\n{LICENSE_TO_CLASSIFIER[license_id]}'
             )
+
+    requires = _python_requires(filename, min_py3_version=min_py3_version)
+    if requires is not None:
+        if not cfg.has_section('options'):
+            cfg.add_section('options')
+        cfg['options']['python_requires'] = requires
 
     # sort the classifiers if present
     if 'classifiers' in cfg['metadata']:
@@ -171,14 +250,26 @@ def format_file(filename: str) -> bool:
     return new_contents != contents
 
 
+def _ver_type(s: str) -> Tuple[int, int]:
+    if len(s.split('.')) != 2:
+        raise argparse.ArgumentTypeError(f'expected #.#, got {s!r}')
+
+    p1, p2 = s.split('.')
+    return int(p1), int(p2)
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('filenames', nargs='*')
+    parser.add_argument('--min-py3-version', type=_ver_type, default=(3, 4))
     args = parser.parse_args(argv)
 
     retv = 0
     for filename in args.filenames:
-        if format_file(filename):
+        if format_file(
+                filename,
+                min_py3_version=args.min_py3_version,
+        ):
             retv = 1
             print(f'Rewriting {filename}')
 

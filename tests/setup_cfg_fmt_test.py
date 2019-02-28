@@ -1,7 +1,21 @@
+import argparse
+
 import pytest
 
 from setup_cfg_fmt import _case_insensitive_glob
+from setup_cfg_fmt import _ver_type
 from setup_cfg_fmt import main
+
+
+def test_ver_type_ok():
+    assert _ver_type('1.2') == (1, 2)
+
+
+def test_ver_type_error():
+    with pytest.raises(argparse.ArgumentTypeError) as excinfo:
+        _ver_type('1.2.3')
+    msg, = excinfo.value.args
+    assert msg == "expected #.#, got '1.2.3'"
 
 
 @pytest.mark.parametrize(
@@ -77,15 +91,15 @@ def test_noop(tmpdir):
             'classifiers =\n'
             '    Programming Language :: Python :: 3\n'
             '    License :: OSI Approved :: MIT License\n'
-            '    Programming Language :: Python :: 3.6\n',
+            '    Programming Language :: Python :: 2\n',
 
             '[metadata]\n'
             'name = pkg\n'
             'version = 1.0\n'
             'classifiers =\n'
             '    License :: OSI Approved :: MIT License\n'
-            '    Programming Language :: Python :: 3\n'
-            '    Programming Language :: Python :: 3.6\n',
+            '    Programming Language :: Python :: 2\n'
+            '    Programming Language :: Python :: 3\n',
 
             id='sorts classifiers',
         ),
@@ -215,4 +229,195 @@ freely, subject to the following restrictions:
         'license_file = LICENSE\n'
         'classifiers =\n'
         '    License :: OSI Approved :: zlib/libpng License\n'
+    )
+
+
+@pytest.mark.parametrize(
+    's',
+    (
+        pytest.param(
+            '>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
+            id='already correct',
+        ),
+        pytest.param('~=3.6', id='weird comparator'),
+    ),
+)
+def test_python_requires_left_alone(tmpdir, s):
+    tmpdir.join('tox.ini').ensure()  # present, but not useful
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        f'[metadata]\n'
+        f'name = pkg\n'
+        f'version = 1.0\n'
+        f'\n'
+        f'[options]\n'
+        f'python_requires = {s}\n',
+    )
+
+    assert not main((str(setup_cfg), '--min-py3-version=3.2'))
+
+    assert setup_cfg.read() == (
+        f'[metadata]\n'
+        f'name = pkg\n'
+        f'version = 1.0\n'
+        f'\n'
+        f'[options]\n'
+        f'python_requires = {s}\n'
+    )
+
+
+def test_guess_python_requires_python2_tox_ini(tmpdir):
+    tmpdir.join('tox.ini').write('[tox]\nenvlist=py36,py27,py37\n')
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n',
+    )
+
+    assert main((str(setup_cfg), '--min-py3-version=3.4'))
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*\n'
+    )
+
+
+def test_guess_python_requires_tox_ini_dashed_name(tmpdir):
+    tmpdir.join('tox.ini').write('[tox]\nenvlist = py37-flake8\n')
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n',
+    )
+
+    assert main((str(setup_cfg), '--min-py3-version=3.4'))
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.7\n'
+    )
+
+
+def test_guess_python_requires_ignores_insufficient_version_envs(tmpdir):
+    tmpdir.join('tox.ini').write('[tox]\nenvlist = py,py2,py3\n')
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n',
+    )
+
+    assert main((str(setup_cfg), '--min-py3-version=3.4')) == 0
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+    )
+
+
+def test_guess_python_requires_from_classifiers(tmpdir):
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 2\n'
+        '    Programming Language :: Python :: 2.7\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3.6\n',
+    )
+
+    assert main((str(setup_cfg), '--min-py3-version=3.4'))
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 2\n'
+        '    Programming Language :: Python :: 2.7\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3.6\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*\n'
+    )
+
+
+def test_min_py3_version_updates_python_requires(tmpdir):
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=2.7, !=3.0.*, !=3.1.*\n',
+    )
+
+    assert main((str(setup_cfg), '--min-py3-version=3.4'))
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*\n'
+    )
+
+
+def test_min_py3_version_greater_than_minimum(tmpdir):
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.2\n',
+    )
+
+    assert main((str(setup_cfg), '--min-py3-version=3.4'))
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.4\n'
+    )
+
+
+def test_min_py3_version_less_than_minimum(tmpdir):
+    tmpdir.join('tox.ini').write('[tox]\nenvlist=py36\n')
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n',
+    )
+
+    assert main((str(setup_cfg), '--min-py3-version=3.4'))
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.6\n'
     )
