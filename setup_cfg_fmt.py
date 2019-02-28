@@ -330,17 +330,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument('--max-py-version', type=_ver_type, default=(3, 7))
     args = parser.parse_args(argv)
 
-    retv = 0
     for filename in args.filenames:
         if format_file(
                 filename,
                 min_py3_version=args.min_py3_version,
                 max_py_version=args.max_py_version,
         ):
-            retv = 1
             print(f'Rewriting {filename}')
-
-    return retv
+    return 0
 
 
 if __name__ == '__main__':
