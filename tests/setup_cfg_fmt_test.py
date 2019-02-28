@@ -270,7 +270,7 @@ def test_python_requires_left_alone(tmpdir, s):
 
 
 def test_guess_python_requires_python2_tox_ini(tmpdir):
-    tmpdir.join('tox.ini').write('[tox]\nenvlist=py36,py27,py37\n')
+    tmpdir.join('tox.ini').write('[tox]\nenvlist=py36,py27,py37,pypy\n')
     setup_cfg = tmpdir.join('setup.cfg')
     setup_cfg.write(
         '[metadata]\n'
