@@ -254,7 +254,10 @@ def test_python_requires_left_alone(tmpdir, s):
         f'python_requires = {s}\n',
     )
 
-    assert not main((str(setup_cfg), '--min-py3-version=3.2'))
+    assert not main((
+        str(setup_cfg), '--min-py3-version=3.2',
+        '--max-py-version=0.0',  # disable classifier generation
+    ))
 
     assert setup_cfg.read() == (
         f'[metadata]\n'
@@ -275,12 +278,22 @@ def test_guess_python_requires_python2_tox_ini(tmpdir):
         'version = 1.0\n',
     )
 
-    assert main((str(setup_cfg), '--min-py3-version=3.4'))
+    assert main((
+        str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
         'name = pkg\n'
         'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 2\n'
+        '    Programming Language :: Python :: 2.7\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3.4\n'
+        '    Programming Language :: Python :: 3.5\n'
+        '    Programming Language :: Python :: 3.6\n'
+        '    Programming Language :: Python :: 3.7\n'
         '\n'
         '[options]\n'
         'python_requires = >=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*\n'
@@ -296,12 +309,18 @@ def test_guess_python_requires_tox_ini_dashed_name(tmpdir):
         'version = 1.0\n',
     )
 
-    assert main((str(setup_cfg), '--min-py3-version=3.4'))
+    assert main((
+        str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
         'name = pkg\n'
         'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.7\n'
         '\n'
         '[options]\n'
         'python_requires = >=3.7\n'
@@ -317,7 +336,9 @@ def test_guess_python_requires_ignores_insufficient_version_envs(tmpdir):
         'version = 1.0\n',
     )
 
-    assert main((str(setup_cfg), '--min-py3-version=3.4')) == 0
+    assert not main((
+        str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -339,7 +360,9 @@ def test_guess_python_requires_from_classifiers(tmpdir):
         '    Programming Language :: Python :: 3.6\n',
     )
 
-    assert main((str(setup_cfg), '--min-py3-version=3.4'))
+    assert main((
+        str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -349,7 +372,10 @@ def test_guess_python_requires_from_classifiers(tmpdir):
         '    Programming Language :: Python :: 2\n'
         '    Programming Language :: Python :: 2.7\n'
         '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3.4\n'
+        '    Programming Language :: Python :: 3.5\n'
         '    Programming Language :: Python :: 3.6\n'
+        '    Programming Language :: Python :: 3.7\n'
         '\n'
         '[options]\n'
         'python_requires = >=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*\n'
@@ -367,12 +393,22 @@ def test_min_py3_version_updates_python_requires(tmpdir):
         'python_requires = >=2.7, !=3.0.*, !=3.1.*\n',
     )
 
-    assert main((str(setup_cfg), '--min-py3-version=3.4'))
+    assert main((
+        str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
         'name = pkg\n'
         'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 2\n'
+        '    Programming Language :: Python :: 2.7\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3.4\n'
+        '    Programming Language :: Python :: 3.5\n'
+        '    Programming Language :: Python :: 3.6\n'
+        '    Programming Language :: Python :: 3.7\n'
         '\n'
         '[options]\n'
         'python_requires = >=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*\n'
@@ -390,12 +426,21 @@ def test_min_py3_version_greater_than_minimum(tmpdir):
         'python_requires = >=3.2\n',
     )
 
-    assert main((str(setup_cfg), '--min-py3-version=3.4'))
+    assert main((
+        str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
         'name = pkg\n'
         'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.4\n'
+        '    Programming Language :: Python :: 3.5\n'
+        '    Programming Language :: Python :: 3.6\n'
+        '    Programming Language :: Python :: 3.7\n'
         '\n'
         '[options]\n'
         'python_requires = >=3.4\n'
@@ -411,12 +456,19 @@ def test_min_py3_version_less_than_minimum(tmpdir):
         'version = 1.0\n',
     )
 
-    assert main((str(setup_cfg), '--min-py3-version=3.4'))
+    assert main((
+        str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
         'name = pkg\n'
         'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.6\n'
+        '    Programming Language :: Python :: 3.7\n'
         '\n'
         '[options]\n'
         'python_requires = >=3.6\n'
