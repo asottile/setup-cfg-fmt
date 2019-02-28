@@ -8,6 +8,7 @@ from typing import Dict
 from typing import Match
 from typing import Optional
 from typing import Sequence
+from typing import Set
 from typing import Tuple
 
 from identify import identify
@@ -93,7 +94,138 @@ def _first_file(setup_cfg: str, prefix: str) -> Optional[str]:
         return None
 
 
-def format_file(filename: str) -> bool:
+def _py3_excluded(min_py3_version: Tuple[int, int]) -> Set[Tuple[int, int]]:
+    _, end = min_py3_version
+    return {(3, i) for i in range(end)}
+
+
+def _format_python_requires(
+        minimum: Tuple[int, int],
+        excluded: Set[Tuple[int, int]],
+) -> str:
+    return ', '.join((
+        f'>={_v(minimum)}', *(f'!={_v(v)}.*' for v in sorted(excluded)),
+    ))
+
+
+class UnknownVersionError(ValueError):
+    pass
+
+
+def _to_ver(s: str) -> Tuple[int, int]:
+    parts = [part for part in s.split('.') if part != '*']
+    if len(parts) != 2:
+        raise UnknownVersionError()
+    else:
+        return int(parts[0]), int(parts[1])
+
+
+def _v(x: Tuple[int, ...]) -> str:
+    return '.'.join(str(p) for p in x)
+
+
+def _parse_python_requires(
+    python_requires: Optional[str],
+) -> Tuple[Optional[Tuple[int, int]], Set[Tuple[int, int]]]:
+    minimum = None
+    excluded = set()
+
+    if python_requires:
+        for part in python_requires.split(','):
+            part = part.strip()
+            if part.startswith('>='):
+                minimum = _to_ver(part[2:])
+            elif part.startswith('!='):
+                excluded.add(_to_ver(part[2:]))
+            else:
+                raise UnknownVersionError()
+
+    return minimum, excluded
+
+
+def _python_requires(
+        setup_cfg: str, *, min_py3_version: Tuple[int, int],
+) -> Optional[str]:
+    cfg = configparser.ConfigParser()
+    cfg.read(setup_cfg)
+    current_value = cfg.get('options', 'python_requires', fallback='')
+    classifiers = cfg.get('metadata', 'classifiers', fallback='')
+
+    try:
+        minimum, excluded = _parse_python_requires(current_value)
+    except UnknownVersionError:  # assume they know what's up with weird things
+        return current_value
+
+    tox_ini = _adjacent_filename(setup_cfg, 'tox.ini')
+    if os.path.exists(tox_ini):
+        cfg = configparser.ConfigParser()
+        cfg.read(tox_ini)
+
+        envlist = cfg.get('tox', 'envlist', fallback='')
+        if envlist:
+            for env in envlist.split(','):
+                env = env.strip()
+                env, _, _ = env.partition('-')  # py36-foo
+                if env.startswith('py') and len(env) == 4:
+                    version = _to_ver('.'.join(env[2:]))
+                    if minimum is None or version < minimum:
+                        minimum = version
+
+    for classifier in classifiers.strip().splitlines():
+        if classifier.startswith('Programming Language :: Python ::'):
+            version_part = classifier.split()[-1]
+            if '.' not in version_part:
+                continue
+            version = _to_ver(version_part)
+            if minimum is None or version < minimum:
+                minimum = version
+
+    if minimum is None:
+        return None
+    elif minimum[0] == 2:
+        excluded.update(_py3_excluded(min_py3_version))
+        return _format_python_requires(minimum, excluded)
+    elif min_py3_version > minimum:
+        return _format_python_requires(min_py3_version, excluded)
+    else:
+        return _format_python_requires(minimum, excluded)
+
+
+def _py_classifiers(
+        python_requires: Optional[str], *, max_py_version: Tuple[int, int],
+) -> Optional[str]:
+    try:
+        minimum, exclude = _parse_python_requires(python_requires)
+    except UnknownVersionError:
+        return None
+
+    if minimum is None:  # don't have a sequence of versions to iterate over
+        return None
+
+    versions: Set[Tuple[int, ...]] = set()
+    while minimum <= max_py_version:
+        if minimum not in exclude:
+            versions.add(minimum)
+            versions.add(minimum[:1])
+        if minimum == (2, 7):
+            minimum = (3, 0)
+        else:
+            minimum = (minimum[0], minimum[1] + 1)
+
+    classifiers = [
+        f'Programming Language :: Python :: {_v(v)}' for v in versions
+    ]
+    if (3,) in versions and (2,) not in versions:
+        classifiers.append('Programming Language :: Python :: 3 :: Only')
+
+    return '\n'.join(classifiers)
+
+
+def format_file(
+        filename: str, *,
+        min_py3_version: Tuple[int, int],
+        max_py_version: Tuple[int, int],
+) -> bool:
     with open(filename) as f:
         contents = f.read()
 
@@ -131,6 +263,19 @@ def format_file(filename: str) -> bool:
                 cfg['metadata'].get('classifiers', '').rstrip() +
                 f'\n{LICENSE_TO_CLASSIFIER[license_id]}'
             )
+
+    requires = _python_requires(filename, min_py3_version=min_py3_version)
+    if requires is not None:
+        if not cfg.has_section('options'):
+            cfg.add_section('options')
+        cfg['options']['python_requires'] = requires
+
+    py_classifiers = _py_classifiers(requires, max_py_version=max_py_version)
+    if py_classifiers:
+        cfg['metadata']['classifiers'] = (
+            cfg['metadata'].get('classifiers', '').rstrip() +
+            f'\n{py_classifiers}'
+        )
 
     # sort the classifiers if present
     if 'classifiers' in cfg['metadata']:
@@ -171,14 +316,27 @@ def format_file(filename: str) -> bool:
     return new_contents != contents
 
 
+def _ver_type(s: str) -> Tuple[int, int]:
+    try:
+        return _to_ver(s)
+    except UnknownVersionError:
+        raise argparse.ArgumentTypeError(f'expected #.#, got {s!r}')
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('filenames', nargs='*')
+    parser.add_argument('--min-py3-version', type=_ver_type, default=(3, 4))
+    parser.add_argument('--max-py-version', type=_ver_type, default=(3, 7))
     args = parser.parse_args(argv)
 
     retv = 0
     for filename in args.filenames:
-        if format_file(filename):
+        if format_file(
+                filename,
+                min_py3_version=args.min_py3_version,
+                max_py_version=args.max_py_version,
+        ):
             retv = 1
             print(f'Rewriting {filename}')
 
