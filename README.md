@@ -107,6 +107,44 @@ This will show up on the pypi project page
 +    License :: OSI Approved :: MIT License
 ```
 
+### set `python_requires`
+
+A few sources are searched for guessing `python_requires`:
+
+- the existing `python_requires` setting itself
+- `envlist` in `tox.ini` if present
+- python version `classifiers` that are already set
+- the `--min-py3-version` argument (currently defaulting to `3.4`)
+
+If the minimum version is detected as python2, the `--min-py3-version`
+argument will be used to exclude python3.x versions (see below).
+
+```diff
+ [options]
+ py_modules = pre_commit
++python_requires = >=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*
+```
+
+### adds python version classifiers
+
+classifiers are generated based on:
+
+- the `python_requires` setting
+- the `--max-py-version` argument (currently defaulting to `3.7`)
+
+```diff
+ name = pkg
+ version = 1.0
++classifiers =
++    Programming Language :: Python :: 2
++    Programming Language :: Python :: 2.7
++    Programming Language :: Python :: 3
++    Programming Language :: Python :: 3.4
++    Programming Language :: Python :: 3.5
++    Programming Language :: Python :: 3.6
++    Programming Language :: Python :: 3.7
+```
+
 ### sorts classifiers
 
 ```diff
