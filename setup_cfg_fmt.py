@@ -166,7 +166,11 @@ def _python_requires(
             for env in envlist.split(','):
                 env = env.strip()
                 env, _, _ = env.partition('-')  # py36-foo
-                if env.startswith('py') and len(env) == 4:
+                if (
+                        env.startswith('py') and
+                        len(env) == 4 and
+                        env[2:].isdigit()
+                ):
                     version = _to_ver('.'.join(env[2:]))
                     if minimum is None or version < minimum:
                         minimum = version
