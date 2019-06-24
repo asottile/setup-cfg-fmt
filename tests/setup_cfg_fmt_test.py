@@ -437,6 +437,86 @@ def test_min_py3_version_greater_than_minimum(tmpdir):
     )
 
 
+def test_min_version_removes_classifiers(tmpdir):
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.2\n'
+        '    Programming Language :: Python :: 3.3\n'
+        '    Programming Language :: Python :: 3.4\n'
+        '    Programming Language :: Python :: 3.5\n'
+        '    Programming Language :: Python :: 3.6\n'
+        '    Programming Language :: Python :: 3.7\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.2\n',
+    )
+
+    main((str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7'))
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.4\n'
+        '    Programming Language :: Python :: 3.5\n'
+        '    Programming Language :: Python :: 3.6\n'
+        '    Programming Language :: Python :: 3.7\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.4\n'
+    )
+
+
+def test_classifiers_left_alone_for_odd_python_requires(tmpdir):
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.2\n'
+        '    Programming Language :: Python :: 3.3\n'
+        '    Programming Language :: Python :: 3.4\n'
+        '    Programming Language :: Python :: 3.5\n'
+        '    Programming Language :: Python :: 3.6\n'
+        '    Programming Language :: Python :: 3.7\n'
+        '\n'
+        '[options]\n'
+        'python_requires = ~=3.2\n',
+    )
+
+    main((str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7'))
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.2\n'
+        '    Programming Language :: Python :: 3.3\n'
+        '    Programming Language :: Python :: 3.4\n'
+        '    Programming Language :: Python :: 3.5\n'
+        '    Programming Language :: Python :: 3.6\n'
+        '    Programming Language :: Python :: 3.7\n'
+        '\n'
+        '[options]\n'
+        'python_requires = ~=3.2\n'
+    )
+
+
 def test_min_py3_version_less_than_minimum(tmpdir):
     tmpdir.join('tox.ini').write('[tox]\nenvlist=py36\n')
     setup_cfg = tmpdir.join('setup.cfg')

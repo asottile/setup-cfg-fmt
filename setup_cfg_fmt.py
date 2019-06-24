@@ -5,6 +5,7 @@ import io
 import os.path
 import re
 from typing import Dict
+from typing import List
 from typing import Match
 from typing import Optional
 from typing import Sequence
@@ -225,6 +226,35 @@ def _py_classifiers(
     return '\n'.join(classifiers)
 
 
+def _trim_py_classifiers(
+        classifiers: List[str],
+        python_requires: Optional[str],
+        *,
+        max_py_version: Tuple[int, int],
+) -> List[str]:
+    try:
+        minimum, exclude = _parse_python_requires(python_requires)
+    except UnknownVersionError:
+        return classifiers
+
+    def _is_ok_classifier(s: str) -> bool:
+        parts = s.split(' :: ')
+        if (
+                # can't know if it applies without a minimum
+                minimum is None or
+                # handle Python :: 3 :: Only
+                len(parts) != 3 or
+                not s.startswith('Programming Language :: Python :: ')
+        ):
+            return True
+
+        ver = tuple(int(p) for p in parts[-1].strip().split('.'))
+        size = len(ver)
+        return minimum[:size] <= ver <= max_py_version[:size]  # type: ignore
+
+    return [s for s in classifiers if _is_ok_classifier(s)]
+
+
 def format_file(
         filename: str, *,
         min_py3_version: Tuple[int, int],
@@ -284,6 +314,9 @@ def format_file(
     # sort the classifiers if present
     if 'classifiers' in cfg['metadata']:
         classifiers = sorted(set(cfg['metadata']['classifiers'].split('\n')))
+        classifiers = _trim_py_classifiers(
+            classifiers, requires, max_py_version=max_py_version,
+        )
         cfg['metadata']['classifiers'] = '\n'.join(classifiers)
 
     sections: Dict[str, Dict[str, str]] = {}
