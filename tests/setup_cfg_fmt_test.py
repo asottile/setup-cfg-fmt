@@ -454,7 +454,7 @@ def test_min_version_removes_classifiers(tmpdir):
         '    Programming Language :: Python :: 3.7\n'
         '\n'
         '[options]\n'
-        'python_requires = >=3.2\n',
+        'python_requires = >=3.2, !=3.6.*\n',
     )
 
     main((str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7'))
@@ -468,11 +468,10 @@ def test_min_version_removes_classifiers(tmpdir):
         '    Programming Language :: Python :: 3 :: Only\n'
         '    Programming Language :: Python :: 3.4\n'
         '    Programming Language :: Python :: 3.5\n'
-        '    Programming Language :: Python :: 3.6\n'
         '    Programming Language :: Python :: 3.7\n'
         '\n'
         '[options]\n'
-        'python_requires = >=3.4\n'
+        'python_requires = >=3.4, !=3.6.*\n'
     )
 
 

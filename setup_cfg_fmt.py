@@ -250,7 +250,11 @@ def _trim_py_classifiers(
 
         ver = tuple(int(p) for p in parts[-1].strip().split('.'))
         size = len(ver)
-        return minimum[:size] <= ver <= max_py_version[:size]  # type: ignore
+        return (
+            ver not in exclude and
+            # https://github.com/python/mypy/issues/7056
+            minimum[:size] <= ver <= max_py_version[:size]  # type: ignore
+        )
 
     return [s for s in classifiers if _is_ok_classifier(s)]
 
