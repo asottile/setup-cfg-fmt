@@ -3,6 +3,7 @@ import argparse
 import pytest
 
 from setup_cfg_fmt import _case_insensitive_glob
+from setup_cfg_fmt import _normalize_lib
 from setup_cfg_fmt import _ver_type
 from setup_cfg_fmt import main
 
@@ -56,6 +57,67 @@ def test_noop(tmpdir):
 @pytest.mark.parametrize(
     ('input_s', 'expected'),
     (
+        pytest.param(
+            '[metadata]\n'
+            'version = 1.0\n'
+            'name = pkg\n'
+            '[options]\n'
+            'install_requires =\n'
+            '    req03\n'
+            '    req05 <= 2,!=1\n'
+            '    req06 ;python_version==2.7\n'
+            '    req07 ;os_version!=windows\n'
+            '    req13 !=2, >= 7\n'
+            '    req14 <=2, >= 1\n'
+            '    req01\n'
+            '       req02\n'
+            '    req09 ~= 7\n'
+            '    req10 === 8\n'
+            '    req11; python_version=="2.7"\n'
+            '    req08    ==    2\n'
+            '    req12;\n'
+            '    req04 >= 1\n',
+
+            '[metadata]\n'
+            'name = pkg\n'
+            'version = 1.0\n'
+            '\n'
+            '[options]\n'
+            'install_requires =\n'
+            '    req01\n'
+            '    req02\n'
+            '    req03\n'
+            '    req04>=1\n'
+            '    req05!=1,<=2\n'
+            '    req08==2\n'
+            '    req09~=7\n'
+            '    req10===8\n'
+            '    req12\n'
+            '    req13!=2,>=7\n'
+            '    req14>=1,<=2\n'
+            '    req06;python_version==2.7\n'
+            '    req07;os_version!=windows\n'
+            '    req11;python_version=="2.7"\n',
+
+            id='normalizes install_requires',
+        ),
+        pytest.param(
+            '[metadata]\n'
+            'version = 1.0\n'
+            'name = pkg\n'
+            '[options]\n'
+            'install_requires =\n'
+            '    req03\n',
+
+            '[metadata]\n'
+            'name = pkg\n'
+            'version = 1.0\n'
+            '\n'
+            '[options]\n'
+            'install_requires = req03\n',
+
+            id='normalize single install_requires req to one line',
+        ),
         pytest.param(
             '[bdist_wheel]\n'
             'universal = true\n'
@@ -112,6 +174,20 @@ def test_rewrite(input_s, expected, tmpdir):
     main((str(setup_cfg),))
 
     assert setup_cfg.read() == expected
+
+
+@pytest.mark.parametrize(
+    ('lib', 'expected'),
+    (
+        pytest.param('req01', 'req01', id='no conditions'),
+        pytest.param('req04 >= 1', 'req04>=1', id='whitespace stripped'),
+        pytest.param('req05 <= 2,!=1', 'req05!=1,<=2', id='<= cond at end'),
+        pytest.param('req13 !=2, >= 7', 'req13!=2,>=7', id='>= cond at end'),
+        pytest.param('req14 <=2, >= 1', 'req14>=1,<=2', id='b/w conds sorted'),
+    ),
+)
+def test_normalize_lib(lib, expected):
+    assert _normalize_lib(lib) == expected
 
 
 @pytest.mark.parametrize(

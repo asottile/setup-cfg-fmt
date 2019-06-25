@@ -196,6 +196,55 @@ def _python_requires(
         return _format_python_requires(minimum, excluded)
 
 
+def _install_requires(cfg: configparser.ConfigParser) -> List[str]:
+    raw = cfg.get('options', 'install_requires', fallback='')
+
+    install_requires = raw.strip().splitlines()
+
+    normalized = sorted(
+        (_normalize_req(req) for req in install_requires),
+        key=lambda req: (';' in req, req),
+    )
+
+    if len(normalized) > 1:
+        normalized.insert(0, '')
+
+    return normalized
+
+
+def _normalize_req(req: str) -> str:
+    lib, _, envs = req.partition(';')
+    normalized = _normalize_lib(lib)
+
+    envs = envs.strip()
+    if not envs:
+        return normalized
+
+    return f'{normalized};{envs}'
+
+
+BASE_NAME_REGEX = re.compile(r'[^!=><\s]+')
+REQ_REGEX = re.compile(r'(===|==|!=|~=|>=?|<=?)\s*([^,]+)')
+
+
+def _normalize_lib(lib: str) -> str:
+    basem = re.match(BASE_NAME_REGEX, lib)
+    assert basem
+    base = basem.group(0)
+
+    conditions = ','.join(
+        sorted(
+            (
+                f'{m.group(1)}{m.group(2)}'
+                for m in REQ_REGEX.finditer(lib)
+            ),
+            key=lambda c: ('<' in c, '>' in 'c', c),
+        ),
+    )
+
+    return f'{base}{conditions}'
+
+
 def _py_classifiers(
         python_requires: Optional[str], *, max_py_version: Tuple[int, int],
 ) -> Optional[str]:
@@ -307,6 +356,10 @@ def format_file(
         if not cfg.has_section('options'):
             cfg.add_section('options')
         cfg['options']['python_requires'] = requires
+
+    install_requires = _install_requires(cfg)
+    if install_requires:
+        cfg['options']['install_requires'] = '\n'.join(install_requires)
 
     py_classifiers = _py_classifiers(requires, max_py_version=max_py_version)
     if py_classifiers:
