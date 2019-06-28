@@ -55,14 +55,14 @@ def test_noop(tmpdir):
 
 
 @pytest.mark.parametrize(
-    ('input_s', 'expected'),
+    ('input_tpl', 'expected_tpl'),
     (
         pytest.param(
             '[metadata]\n'
             'version = 1.0\n'
             'name = pkg\n'
             '[options]\n'
-            'install_requires =\n'
+            '{} =\n'
             '    req03\n'
             '    req05 <= 2,!=1\n'
             '    req06 ;python_version==2.7\n'
@@ -83,7 +83,7 @@ def test_noop(tmpdir):
             'version = 1.0\n'
             '\n'
             '[options]\n'
-            'install_requires =\n'
+            '{} =\n'
             '    req01\n'
             '    req02\n'
             '    req03\n'
@@ -106,7 +106,7 @@ def test_noop(tmpdir):
             'version = 1.0\n'
             'name = pkg\n'
             '[options]\n'
-            'install_requires =\n'
+            '{} =\n'
             '    req03\n',
 
             '[metadata]\n'
@@ -114,10 +114,28 @@ def test_noop(tmpdir):
             'version = 1.0\n'
             '\n'
             '[options]\n'
-            'install_requires = req03\n',
+            '{} = req03\n',
 
-            id='normalize single install_requires req to one line',
+            id='normalize single req to one line',
         ),
+    ),
+)
+@pytest.mark.parametrize(
+    'which',
+    ('install_requires', 'setup_requires'),
+)
+def test_rewrite_requires(which, input_tpl, expected_tpl, tmpdir):
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(input_tpl.format(which))
+
+    main((str(setup_cfg),))
+
+    assert setup_cfg.read() == expected_tpl.format(which)
+
+
+@pytest.mark.parametrize(
+    ('input_s', 'expected'),
+    (
         pytest.param(
             '[bdist_wheel]\n'
             'universal = true\n'

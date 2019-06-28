@@ -196,8 +196,8 @@ def _python_requires(
         return _format_python_requires(minimum, excluded)
 
 
-def _install_requires(cfg: configparser.ConfigParser) -> List[str]:
-    raw = cfg.get('options', 'install_requires', fallback='')
+def _requires(cfg: configparser.ConfigParser, which: str) -> List[str]:
+    raw = cfg.get('options', which, fallback='')
 
     install_requires = raw.strip().splitlines()
 
@@ -357,9 +357,13 @@ def format_file(
             cfg.add_section('options')
         cfg['options']['python_requires'] = requires
 
-    install_requires = _install_requires(cfg)
+    install_requires = _requires(cfg, 'install_requires')
     if install_requires:
         cfg['options']['install_requires'] = '\n'.join(install_requires)
+
+    setup_requires = _requires(cfg, 'setup_requires')
+    if setup_requires:
+        cfg['options']['setup_requires'] = '\n'.join(setup_requires)
 
     py_classifiers = _py_classifiers(requires, max_py_version=max_py_version)
     if py_classifiers:
