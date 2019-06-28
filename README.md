@@ -18,7 +18,7 @@ Sample `.pre-commit-config.yaml`:
 
 ```yaml
 -   repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v1.2.1
+    rev: v1.3.0
     hooks:
     -   id: setup-cfg-fmt
 ```
