@@ -203,7 +203,7 @@ def _requires(cfg: configparser.ConfigParser, which: str) -> List[str]:
 
     normalized = sorted(
         (_normalize_req(req) for req in install_requires),
-        key=lambda req: (';' in req, req),
+        key=lambda req: (';' in req, _req_base(req), req),
     )
 
     if len(normalized) > 1:
@@ -228,9 +228,7 @@ REQ_REGEX = re.compile(r'(===|==|!=|~=|>=?|<=?)\s*([^,]+)')
 
 
 def _normalize_lib(lib: str) -> str:
-    basem = re.match(BASE_NAME_REGEX, lib)
-    assert basem
-    base = basem.group(0)
+    base = _req_base(lib)
 
     conditions = ','.join(
         sorted(
@@ -243,6 +241,12 @@ def _normalize_lib(lib: str) -> str:
     )
 
     return f'{base}{conditions}'
+
+
+def _req_base(lib: str) -> str:
+    basem = re.match(BASE_NAME_REGEX, lib)
+    assert basem
+    return basem.group(0)
 
 
 def _py_classifiers(
