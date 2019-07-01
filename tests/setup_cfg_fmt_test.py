@@ -101,24 +101,7 @@ def test_noop(tmpdir):
             '    req07;os_version!=windows\n'
             '    req11;python_version=="2.7"\n',
 
-            id='normalizes install_requires',
-        ),
-        pytest.param(
-            '[metadata]\n'
-            'version = 1.0\n'
-            'name = pkg\n'
-            '[options]\n'
-            '{} =\n'
-            '    req03\n',
-
-            '[metadata]\n'
-            'name = pkg\n'
-            'version = 1.0\n'
-            '\n'
-            '[options]\n'
-            '{} = req03\n',
-
-            id='normalize single req to one line',
+            id='normalizes requires',
         ),
     ),
 )
