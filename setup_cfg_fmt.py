@@ -200,14 +200,14 @@ def _requires(cfg: configparser.ConfigParser, which: str) -> List[str]:
     raw = cfg.get('options', which, fallback='')
 
     install_requires = raw.strip().splitlines()
+    if not install_requires:
+        return []
 
     normalized = sorted(
         (_normalize_req(req) for req in install_requires),
         key=lambda req: (';' in req, _req_base(req), req),
     )
-
-    if len(normalized) > 1:
-        normalized.insert(0, '')
+    normalized.insert(0, '')
 
     return normalized
 
