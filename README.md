@@ -114,7 +114,7 @@ A few sources are searched for guessing `python_requires`:
 - the existing `python_requires` setting itself
 - `envlist` in `tox.ini` if present
 - python version `classifiers` that are already set
-- the `--min-py3-version` argument (currently defaulting to `3.4`)
+- the `--min-py3-version` argument (currently defaulting to `3.5`)
 
 If the minimum version is detected as python2, the `--min-py3-version`
 argument will be used to exclude python3.x versions (see below).
