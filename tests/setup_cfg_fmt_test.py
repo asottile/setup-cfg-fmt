@@ -31,27 +31,46 @@ def test_case_insensitive_glob(s, expected):
     assert _case_insensitive_glob(s) == expected
 
 
-def test_noop(tmpdir):
+@pytest.mark.parametrize(
+    'input_s',
+    (
+        pytest.param(
+            '[metadata]\n'
+            'name = pkg\n'
+            'version = 1.0\n'
+            '\n'
+            '[bdist_wheel]\n'
+            'universal = true\n',
+            id='minimal',
+        ),
+        pytest.param(
+            '[metadata]\n'
+            'name = pkg\n'
+            'version = 1.0\n'
+            '\n'
+            '[flake8]\n'
+            'max-line-length = 88\n',
+            id='tool config',
+        ),
+        pytest.param(
+            '[metadata]\n'
+            'name = pkg\n'
+            'version = 1.0\n'
+            '\n'
+            '[flake8]\n'
+            '# Matching black\'s default\n'
+            'max-line-length = 88\n',
+            id='comment',
+        ),
+    ),
+)
+def test_noop(tmpdir, input_s):
     setup_cfg = tmpdir.join('setup.cfg')
-    setup_cfg.write(
-        '[metadata]\n'
-        'name = pkg\n'
-        'version = 1.0\n'
-        '\n'
-        '[bdist_wheel]\n'
-        'universal = true\n',
-    )
+    setup_cfg.write(input_s)
 
     main((str(setup_cfg),))
 
-    assert setup_cfg.read() == (
-        '[metadata]\n'
-        'name = pkg\n'
-        'version = 1.0\n'
-        '\n'
-        '[bdist_wheel]\n'
-        'universal = true\n'
-    )
+    assert setup_cfg.read() == input_s
 
 
 @pytest.mark.parametrize(
