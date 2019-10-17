@@ -429,7 +429,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('filenames', nargs='*')
     parser.add_argument('--min-py3-version', type=_ver_type, default=(3, 5))
-    parser.add_argument('--max-py-version', type=_ver_type, default=(3, 7))
+    parser.add_argument('--max-py-version', type=_ver_type, default=(3, 8))
     args = parser.parse_args(argv)
 
     for filename in args.filenames:
