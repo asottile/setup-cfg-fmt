@@ -130,7 +130,7 @@ argument will be used to exclude python3.x versions (see below).
 classifiers are generated based on:
 
 - the `python_requires` setting
-- the `--max-py-version` argument (currently defaulting to `3.7`)
+- the `--max-py-version` argument (currently defaulting to `3.8`)
 
 ```diff
  name = pkg
@@ -143,6 +143,7 @@ classifiers are generated based on:
 +    Programming Language :: Python :: 3.5
 +    Programming Language :: Python :: 3.6
 +    Programming Language :: Python :: 3.7
++    Programming Language :: Python :: 3.8
 ```
 
 ### sorts classifiers
