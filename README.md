@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/asottile/setup-cfg-fmt.svg?branch=master)](https://travis-ci.org/asottile/setup-cfg-fmt)
-[![Coverage Status](https://coveralls.io/repos/github/asottile/setup-cfg-fmt/badge.svg?branch=master)](https://coveralls.io/github/asottile/setup-cfg-fmt?branch=master)
+[![Build Status](https://dev.azure.com/asottile/asottile/_apis/build/status/asottile.setup-cfg-fmt?branchName=master)](https://dev.azure.com/asottile/asottile/_build/latest?definitionId=51&branchName=master)
+[![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/asottile/asottile/51/master.svg)](https://dev.azure.com/asottile/asottile/_build/latest?definitionId=51&branchName=master)
 
 setup-cfg-fmt
 =============
