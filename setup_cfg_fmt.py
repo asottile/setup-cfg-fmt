@@ -21,7 +21,7 @@ KEYS_ORDER: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
             'name', 'version', 'description',
             'long_description', 'long_description_content_type',
             'url', 'author', 'author_email', 'license', 'license_file',
-            'platforms', 'classifiers',
+            'license_files', 'platforms', 'classifiers',
         ),
     ),
     (
