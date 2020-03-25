@@ -245,6 +245,11 @@ def test_sets_license_file_if_license_exists(filename, tmpdir):
     )
 
 
+def test_license_does_not_match_directories(tmpdir):
+    tmpdir.join('licenses').ensure_dir()
+    test_sets_license_file_if_license_exists('LICENSE', tmpdir)
+
+
 def test_rewrite_sets_license_type_and_classifier(tmpdir):
     with open('LICENSE') as f:
         tmpdir.join('LICENSE').write(f.read())
