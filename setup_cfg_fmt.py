@@ -323,6 +323,7 @@ def format_file(
 
     cfg = configparser.ConfigParser()
     cfg.read_string(contents)
+    _clean_sections(cfg)
 
     # normalize names to underscores so sdist / wheel have the same prefix
     cfg['metadata']['name'] = cfg['metadata']['name'].replace('-', '_')
@@ -417,6 +418,16 @@ def format_file(
             f.write(new_contents)
 
     return new_contents != contents
+
+
+def _clean_sections(cfg: configparser.ConfigParser) -> None:
+    """Removes any empty options and sections."""
+    for section in cfg.sections():
+        new_options = {k: v for k, v in cfg[section].items() if v}
+        if new_options:
+            cfg[section] = new_options
+        else:
+            cfg.pop(section)
 
 
 def _ver_type(s: str) -> Tuple[int, int]:
