@@ -160,6 +160,14 @@ classifiers are generated based on:
      Programming Language :: Python :: 3.6
 ```
 
+### removes empty options in any section
+
+```diff
+ [options]
+-dependency_links =
+ python_requires = >= 3.6.1
+```
+
 ## related projects
 
 - [setup-py-upgrade]: automatically migrate `setup.py` -> `setup.cfg`

@@ -353,6 +353,46 @@ def test_python_requires_left_alone(tmpdir, s):
     )
 
 
+@pytest.mark.parametrize(
+    ('section', 'expected'),
+    (
+        pytest.param(
+            '\n'
+            '[options]\n'
+            'dependency_links = \n'
+            'py_modules = pkg\n',
+            '\n'
+            '[options]\n'
+            'py_modules = pkg\n',
+            id='only empty options removed',
+        ),
+        pytest.param(
+            '\n'
+            '[options]\n'
+            'dependency_links = \n',
+            '',
+            id='entire section removed if all empty options are removed',
+        ),
+    ),
+)
+def test_strips_empty_options_and_sections(tmpdir, section, expected):
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        f'{section}',
+    )
+
+    main((str(setup_cfg),))
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        f'{expected}'
+    )
+
+
 def test_guess_python_requires_python2_tox_ini(tmpdir):
     tmpdir.join('tox.ini').write('[tox]\nenvlist=py36,py27,py37,pypy\n')
     setup_cfg = tmpdir.join('setup.cfg')
