@@ -168,6 +168,25 @@ def test_rewrite_requires(which, input_tpl, expected_tpl, tmpdir):
 
             id='sorts classifiers',
         ),
+        pytest.param(
+            '[metadata]\n'
+            'maintainer_email = jane@example.com\n'
+            'maintainer = jane\n'
+            'license = foo\n'
+            'name = pkg\n'
+            'author_email = john@example.com\n'
+            'author = john\n',
+
+            '[metadata]\n'
+            'name = pkg\n'
+            'author = john\n'
+            'author_email = john@example.com\n'
+            'maintainer = jane\n'
+            'maintainer_email = jane@example.com\n'
+            'license = foo\n',
+
+            id='orders authors and maintainers',
+        ),
     ),
 )
 def test_rewrite(input_s, expected, tmpdir):

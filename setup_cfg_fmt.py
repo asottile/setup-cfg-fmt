@@ -20,8 +20,10 @@ KEYS_ORDER: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
         'metadata', (
             'name', 'version', 'description',
             'long_description', 'long_description_content_type',
-            'url', 'author', 'author_email', 'license', 'license_file',
-            'license_files', 'platforms', 'classifiers',
+            'url',
+            'author', 'author_email', 'maintainer', 'maintainer_email',
+            'license', 'license_file', 'license_files',
+            'platforms', 'classifiers',
         ),
     ),
     (
