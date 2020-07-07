@@ -224,8 +224,8 @@ def _normalize_req(req: str) -> str:
     return f'{normalized};{envs}'
 
 
-BASE_NAME_REGEX = re.compile(r'[^!=><\s]+')
-REQ_REGEX = re.compile(r'(===|==|!=|~=|>=?|<=?)\s*([^,]+)')
+BASE_NAME_REGEX = re.compile(r'[^!=><\s@]+')
+REQ_REGEX = re.compile(r'(===|==|!=|~=|>=?|<=?|@)\s*([^,]+)')
 
 
 def _normalize_lib(lib: str) -> str:

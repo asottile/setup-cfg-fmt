@@ -77,7 +77,9 @@ def test_noop(tmpdir):
             '    req11; python_version=="2.7"\n'
             '    req08    ==    2\n'
             '    req12;\n'
-            '    req04 >= 1\n',
+            '    req04 >= 1\n'
+            '    req15 @ git+https://github.com/foo/bar.git@master\n'
+            '    req16@git+https://github.com/biz/womp.git@tag\n',
 
             '[metadata]\n'
             'name = pkg\n'
@@ -97,6 +99,8 @@ def test_noop(tmpdir):
             '    req12\n'
             '    req13!=2,>=7\n'
             '    req14>=1,<=2\n'
+            '    req15@git+https://github.com/foo/bar.git@master\n'
+            '    req16@git+https://github.com/biz/womp.git@tag\n'
             '    req06;python_version==2.7\n'
             '    req07;os_version!=windows\n'
             '    req11;python_version=="2.7"\n',
