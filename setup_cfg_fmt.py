@@ -445,6 +445,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument('--max-py-version', type=_ver_type, default=(3, 8))
     args = parser.parse_args(argv)
 
+    retv = 0
     for filename in args.filenames:
         if format_file(
                 filename,
@@ -452,7 +453,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 max_py_version=args.max_py_version,
         ):
             print(f'Rewriting {filename}')
-    return 0
+            retv = 1
+    return retv
 
 
 if __name__ == '__main__':
