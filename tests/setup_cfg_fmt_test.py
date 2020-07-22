@@ -716,3 +716,35 @@ def test_min_py3_version_less_than_minimum(tmpdir):
         '[options]\n'
         'python_requires = >=3.6\n'
     )
+
+
+def test_rewrite_extras(tmpdir):
+    setup_cfg_content = (
+        '[metadata]\n'
+        'name = test\n'
+        '[options.extras_require]\n'
+        'dev =\n'
+        '    pytest\n'
+        '    hypothesis\n'
+        'ci =\n'
+        '    hypothesis\n'
+        '    pytest\n'
+        'arg =\n'
+    )
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(setup_cfg_content)
+
+    main((str(setup_cfg),))
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = test\n'
+        '\n'
+        '[options.extras_require]\n'
+        'ci =\n'
+        '    hypothesis\n'
+        '    pytest\n'
+        'dev =\n'
+        '    hypothesis\n'
+        '    pytest\n'
+    )

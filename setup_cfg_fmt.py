@@ -199,19 +199,20 @@ def _python_requires(
         return _format_python_requires(minimum, excluded)
 
 
-def _requires(cfg: configparser.ConfigParser, which: str) -> List[str]:
-    raw = cfg.get('options', which, fallback='')
+def _requires(
+        cfg: configparser.ConfigParser, which: str, section: str = 'options',
+) -> List[str]:
+    raw = cfg.get(section, which, fallback='')
 
-    install_requires = raw.strip().splitlines()
-    if not install_requires:
+    require_group = raw.strip().splitlines()
+    if not require_group:
         return []
 
     normalized = sorted(
-        (_normalize_req(req) for req in install_requires),
+        (_normalize_req(req) for req in require_group),
         key=lambda req: (';' in req, _req_base(req), req),
     )
     normalized.insert(0, '')
-
     return normalized
 
 
@@ -371,6 +372,11 @@ def format_file(
     setup_requires = _requires(cfg, 'setup_requires')
     if setup_requires:
         cfg['options']['setup_requires'] = '\n'.join(setup_requires)
+
+    if cfg.has_section('options.extras_require'):
+        for key in cfg['options.extras_require']:
+            group_requires = _requires(cfg, key, 'options.extras_require')
+            cfg['options.extras_require'][key] = '\n'.join(group_requires)
 
     py_classifiers = _py_classifiers(requires, max_py_version=max_py_version)
     if py_classifiers:
