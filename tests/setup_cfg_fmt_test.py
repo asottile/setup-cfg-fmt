@@ -1,4 +1,5 @@
 import argparse
+import os
 
 import pytest
 
@@ -42,7 +43,7 @@ def test_noop(tmpdir):
         'universal = true\n',
     )
 
-    main((str(setup_cfg),))
+    assert not main((str(setup_cfg),))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -117,7 +118,7 @@ def test_rewrite_requires(which, input_tpl, expected_tpl, tmpdir):
     setup_cfg = tmpdir.join('setup.cfg')
     setup_cfg.write(input_tpl.format(which))
 
-    main((str(setup_cfg),))
+    assert main((str(setup_cfg),))
 
     assert setup_cfg.read() == expected_tpl.format(which)
 
@@ -197,7 +198,7 @@ def test_rewrite(input_s, expected, tmpdir):
     setup_cfg = tmpdir.join('setup.cfg')
     setup_cfg.write(input_s)
 
-    main((str(setup_cfg),))
+    assert main((str(setup_cfg),))
 
     assert setup_cfg.read() == expected
 
@@ -235,7 +236,7 @@ def test_adds_long_description_with_readme(filename, content_type, tmpdir):
         'version = 1.0\n',
     )
 
-    main((str(setup_cfg),))
+    assert main((str(setup_cfg),))
 
     assert setup_cfg.read() == (
         f'[metadata]\n'
@@ -243,6 +244,24 @@ def test_adds_long_description_with_readme(filename, content_type, tmpdir):
         f'version = 1.0\n'
         f'long_description = file: {filename}\n'
         f'long_description_content_type = {content_type}\n'
+    )
+
+
+def test_readme_discover_prefers_file_over_directory(tmpdir):
+    tmpdir.join('README').mkdir()
+    tmpdir.join('README.md').write('my project!')
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n',
+    )
+    assert main((str(setup_cfg),))
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'long_description = file: README.md\n'
+        'long_description_content_type = text/markdown\n'
     )
 
 
@@ -258,7 +277,7 @@ def test_sets_license_file_if_license_exists(filename, tmpdir):
         'version = 1.0\n',
     )
 
-    main((str(setup_cfg),))
+    assert main((str(setup_cfg),))
 
     assert setup_cfg.read() == (
         f'[metadata]\n'
@@ -274,7 +293,9 @@ def test_license_does_not_match_directories(tmpdir):
 
 
 def test_rewrite_sets_license_type_and_classifier(tmpdir):
-    with open('LICENSE') as f:
+    here = os.path.dirname(__file__)
+    license_file = os.path.join(here, os.pardir, 'LICENSE')
+    with open(license_file) as f:
         tmpdir.join('LICENSE').write(f.read())
     setup_cfg = tmpdir.join('setup.cfg')
     setup_cfg.write(
@@ -283,7 +304,7 @@ def test_rewrite_sets_license_type_and_classifier(tmpdir):
         'version = 1.0\n',
     )
 
-    main((str(setup_cfg),))
+    assert main((str(setup_cfg),))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -326,7 +347,7 @@ freely, subject to the following restrictions:
         'version = 1.0\n',
     )
 
-    main((str(setup_cfg),))
+    assert main((str(setup_cfg),))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -407,7 +428,7 @@ def test_strips_empty_options_and_sections(tmpdir, section, expected):
         f'{section}',
     )
 
-    main((str(setup_cfg),))
+    assert main((str(setup_cfg),))
     assert setup_cfg.read() == (
         '[metadata]\n'
         'name = pkg\n'
@@ -425,7 +446,8 @@ def test_guess_python_requires_python2_tox_ini(tmpdir):
         'version = 1.0\n',
     )
 
-    main((str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7'))
+    args = (str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7')
+    assert main(args)
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -454,7 +476,8 @@ def test_guess_python_requires_tox_ini_dashed_name(tmpdir):
         'version = 1.0\n',
     )
 
-    main((str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7'))
+    args = (str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7')
+    assert main(args)
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -503,7 +526,8 @@ def test_guess_python_requires_from_classifiers(tmpdir):
         '    Programming Language :: Python :: 3.6\n',
     )
 
-    main((str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7'))
+    args = (str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7')
+    assert main(args)
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -534,7 +558,8 @@ def test_min_py3_version_updates_python_requires(tmpdir):
         'python_requires = >=2.7, !=3.0.*, !=3.1.*\n',
     )
 
-    main((str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7'))
+    args = (str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7')
+    assert main(args)
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -565,7 +590,8 @@ def test_min_py3_version_greater_than_minimum(tmpdir):
         'python_requires = >=3.2\n',
     )
 
-    main((str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7'))
+    args = (str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7')
+    assert main(args)
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -604,7 +630,8 @@ def test_min_version_removes_classifiers(tmpdir):
         'python_requires = >=3.2, !=3.6.*\n',
     )
 
-    main((str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7'))
+    args = (str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7')
+    assert main(args)
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -642,7 +669,8 @@ def test_classifiers_left_alone_for_odd_python_requires(tmpdir):
         'python_requires = ~=3.2\n',
     )
 
-    main((str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7'))
+    args = (str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7')
+    assert not main(args)
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -672,7 +700,8 @@ def test_min_py3_version_less_than_minimum(tmpdir):
         'version = 1.0\n',
     )
 
-    main((str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7'))
+    args = (str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7')
+    assert main(args)
 
     assert setup_cfg.read() == (
         '[metadata]\n'
