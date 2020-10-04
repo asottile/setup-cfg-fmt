@@ -91,7 +91,7 @@ def _case_insensitive_glob(s: str) -> str:
 def _first_file(setup_cfg: str, prefix: str) -> Optional[str]:
     prefix = _case_insensitive_glob(prefix)
     path = _adjacent_filename(setup_cfg, prefix)
-    for filename in glob.iglob(f'{path}*'):
+    for filename in sorted(glob.iglob(f'{path}*')):
         if os.path.isfile(filename):
             return filename
     else:
