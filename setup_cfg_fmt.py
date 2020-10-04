@@ -398,11 +398,11 @@ def format_file(
         if section not in cfg:
             continue
 
-        new_section = {
-            k: cfg[section].pop(k) for k in key_order if k in cfg[section]
-        }
+        entries = {k.replace('-', '_'): v for k, v in cfg[section].items()}
+
+        new_section = {k: entries.pop(k) for k in key_order if k in entries}
         # sort any remaining keys
-        new_section.update(sorted(cfg[section].items()))
+        new_section.update(sorted(entries.items()))
 
         sections[section] = new_section
         cfg.pop(section)
