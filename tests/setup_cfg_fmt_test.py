@@ -192,6 +192,19 @@ def test_rewrite_requires(which, input_tpl, expected_tpl, tmpdir):
 
             id='orders authors and maintainers',
         ),
+        pytest.param(
+            '[metadata]\n'
+            'name = pkg\n'
+            'author-email = john@example.com\n'
+            'maintainer-email = jane@example.com\n',
+
+            '[metadata]\n'
+            'name = pkg\n'
+            'author_email = john@example.com\n'
+            'maintainer_email = jane@example.com\n',
+
+            id='normalize dashes to underscores in keys',
+        ),
     ),
 )
 def test_rewrite(input_s, expected, tmpdir):
