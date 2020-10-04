@@ -18,7 +18,7 @@ Sample `.pre-commit-config.yaml`:
 
 ```yaml
 -   repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v1.11.0
+    rev: v1.12.0
     hooks:
     -   id: setup-cfg-fmt
 ```
@@ -81,6 +81,17 @@ same filename prefix.
  [metadata]
 -name = pre-commit
 +name = pre_commit
+```
+
+### normalizes dashes to underscores in keys
+
+setuptools allows dashed names but does not document them.
+
+```diff
+ [metadata]
+ name = pre-commit
+-long-description = file: README.md
++long_description = file: README.md
 ```
 
 ### adds `long_description` if `README.md` is present
