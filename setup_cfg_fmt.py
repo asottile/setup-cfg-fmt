@@ -14,6 +14,7 @@ from typing import Tuple
 
 from identify import identify
 
+Version = Tuple[int, ...]
 
 KEYS_ORDER: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
     (
@@ -103,10 +104,7 @@ def _py3_excluded(min_py3_version: Tuple[int, int]) -> Set[Tuple[int, int]]:
     return {(3, i) for i in range(end)}
 
 
-def _format_python_requires(
-        minimum: Tuple[int, int],
-        excluded: Set[Tuple[int, int]],
-) -> str:
+def _format_python_requires(minimum: Version, excluded: Set[Version]) -> str:
     return ', '.join((
         f'>={_v(minimum)}', *(f'!={_v(v)}.*' for v in sorted(excluded)),
     ))
@@ -116,21 +114,21 @@ class UnknownVersionError(ValueError):
     pass
 
 
-def _to_ver(s: str) -> Tuple[int, int]:
+def _to_ver(s: str) -> Version:
     parts = [part for part in s.split('.') if part != '*']
-    if len(parts) != 2:
+    if len(parts) < 2:
         raise UnknownVersionError()
     else:
-        return int(parts[0]), int(parts[1])
+        return tuple(int(part) for part in parts)
 
 
-def _v(x: Tuple[int, ...]) -> str:
+def _v(x: Version) -> str:
     return '.'.join(str(p) for p in x)
 
 
 def _parse_python_requires(
-    python_requires: Optional[str],
-) -> Tuple[Optional[Tuple[int, int]], Set[Tuple[int, int]]]:
+        python_requires: Optional[str],
+) -> Tuple[Optional[Version], Set[Version]]:
     minimum = None
     excluded = set()
 
@@ -176,7 +174,7 @@ def _python_requires(
                         env[2:].isdigit()
                 ):
                     version = _to_ver('.'.join(env[2:]))
-                    if minimum is None or version < minimum:
+                    if minimum is None or version < minimum[:2]:
                         minimum = version
 
     for classifier in classifiers.strip().splitlines():
@@ -185,7 +183,7 @@ def _python_requires(
             if '.' not in version_part:
                 continue
             version = _to_ver(version_part)
-            if minimum is None or version < minimum:
+            if minimum is None or version < minimum[:2]:
                 minimum = version
 
     if minimum is None:
@@ -263,8 +261,11 @@ def _py_classifiers(
 
     if minimum is None:  # don't have a sequence of versions to iterate over
         return None
+    else:
+        # classifiers only use the first two segments of version
+        minimum = minimum[:2]
 
-    versions: Set[Tuple[int, ...]] = set()
+    versions: Set[Version] = set()
     while minimum <= max_py_version:
         if minimum not in exclude:
             versions.add(minimum)
@@ -437,11 +438,16 @@ def _clean_sections(cfg: configparser.ConfigParser) -> None:
             cfg.pop(section)
 
 
-def _ver_type(s: str) -> Tuple[int, int]:
+def _ver_type(s: str) -> Version:
     try:
-        return _to_ver(s)
+        version = _to_ver(s)
     except UnknownVersionError:
+        version = ()
+
+    if len(version) != 2:
         raise argparse.ArgumentTypeError(f'expected #.#, got {s!r}')
+    else:
+        return version
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
