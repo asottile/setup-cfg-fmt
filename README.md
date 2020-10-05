@@ -125,7 +125,7 @@ A few sources are searched for guessing `python_requires`:
 - the existing `python_requires` setting itself
 - `envlist` in `tox.ini` if present
 - python version `classifiers` that are already set
-- the `--min-py3-version` argument (currently defaulting to `3.5`)
+- the `--min-py3-version` argument (currently defaulting to `3.6`)
 
 If the minimum version is detected as python2, the `--min-py3-version`
 argument will be used to exclude python3.x versions (see below).
@@ -141,7 +141,7 @@ argument will be used to exclude python3.x versions (see below).
 classifiers are generated based on:
 
 - the `python_requires` setting
-- the `--max-py-version` argument (currently defaulting to `3.8`)
+- the `--max-py-version` argument (currently defaulting to `3.9`)
 
 ```diff
  name = pkg
@@ -150,11 +150,10 @@ classifiers are generated based on:
 +    Programming Language :: Python :: 2
 +    Programming Language :: Python :: 2.7
 +    Programming Language :: Python :: 3
-+    Programming Language :: Python :: 3.4
-+    Programming Language :: Python :: 3.5
 +    Programming Language :: Python :: 3.6
 +    Programming Language :: Python :: 3.7
 +    Programming Language :: Python :: 3.8
++    Programming Language :: Python :: 3.9
 ```
 
 ### sorts classifiers
