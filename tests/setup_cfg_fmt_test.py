@@ -20,6 +20,13 @@ def test_ver_type_error():
     assert msg == "expected #.#, got '1.2.3'"
 
 
+def test_ver_type_not_a_version():
+    with pytest.raises(argparse.ArgumentTypeError) as excinfo:
+        _ver_type('wat')
+    msg, = excinfo.value.args
+    assert msg == "expected #.#, got 'wat'"
+
+
 @pytest.mark.parametrize(
     ('s', 'expected'),
     (
@@ -381,6 +388,7 @@ freely, subject to the following restrictions:
             id='already correct',
         ),
         pytest.param('~=3.6', id='weird comparator'),
+        pytest.param('>=3', id='not enough version segments'),
     ),
 )
 def test_python_requires_left_alone(tmpdir, s):
@@ -659,6 +667,45 @@ def test_min_version_removes_classifiers(tmpdir):
         '\n'
         '[options]\n'
         'python_requires = >=3.4, !=3.6.*\n'
+    )
+
+
+def test_python_requires_with_patch_version(tmpdir):
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        # added this to make sure that it doesn't revert to 3.6
+        '    Programming Language :: Python :: 3.6\n'
+        '    Programming Language :: Python :: 3.7\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.6.1\n',
+    )
+
+    # added this to make sure it doesn't revert to 3.6
+    tmpdir.join('tox.ini').write('[tox]\nenvlist=py36\n')
+
+    args = (str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.8')
+    assert main(args)
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.6\n'
+        '    Programming Language :: Python :: 3.7\n'
+        '    Programming Language :: Python :: 3.8\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.6.1\n'
     )
 
 
