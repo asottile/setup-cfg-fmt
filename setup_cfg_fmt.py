@@ -4,6 +4,7 @@ import glob
 import io
 import os.path
 import re
+import string
 from typing import Dict
 from typing import List
 from typing import Match
@@ -67,6 +68,11 @@ LICENSE_TO_CLASSIFIER = {
     'PostgreSQL': 'License :: OSI Approved :: PostgreSQL License',
     'UPL-1.0': 'License :: OSI Approved :: Universal Permissive License (UPL)',
     'Zlib': 'License :: OSI Approved :: zlib/libpng License',
+}
+
+TOX_TO_CLASSIFIERS = {
+    'py': 'Programming Language :: Python :: Implementation :: CPython',
+    'pypy': 'Programming Language :: Python :: Implementation :: PyPy',
 }
 
 
@@ -316,6 +322,36 @@ def _trim_py_classifiers(
     return [s for s in classifiers if _is_ok_classifier(s)]
 
 
+def _imp_classifiers(cfg: configparser.ConfigParser, setup_cfg: str) -> str:
+
+    classifiers = cfg.get('metadata', 'classifiers', fallback='')
+    tags = set()
+
+    for classifier in classifiers.strip().splitlines():
+        if 'CPython' in classifier:
+            tags.add('py')
+        elif 'PyPy' in classifier:
+            tags.add('pypy')
+
+    tox_ini = _adjacent_filename(setup_cfg, 'tox.ini')
+    if os.path.exists(tox_ini):
+        cfg = configparser.ConfigParser()
+        cfg.read(tox_ini)
+
+        envlist = cfg.get('tox', 'envlist', fallback='')
+        if envlist:
+            for env in envlist.split(','):
+                # split into factors and remove trailing digits: py39-django31
+                factors = env.split('-')
+                factors = [s.rstrip(string.digits) for s in factors]
+                # test factors against tox keys avoiding duplicates
+                for factor in factors:
+                    if factor in TOX_TO_CLASSIFIERS and factor not in tags:
+                        tags.add(factor)
+
+    return '\n'.join(TOX_TO_CLASSIFIERS[tag] for tag in tags)
+
+
 def format_file(
         filename: str, *,
         min_py3_version: Tuple[int, int],
@@ -384,6 +420,13 @@ def format_file(
         cfg['metadata']['classifiers'] = (
             cfg['metadata'].get('classifiers', '').rstrip() +
             f'\n{py_classifiers}'
+        )
+
+    imp_classifiers = _imp_classifiers(cfg, filename)
+    if imp_classifiers:
+        cfg['metadata']['classifiers'] = (
+            cfg['metadata'].get('classifiers', '').rstrip() +
+            f'\n{imp_classifiers}'
         )
 
     # sort the classifiers if present
