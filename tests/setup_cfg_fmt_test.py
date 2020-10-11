@@ -482,6 +482,8 @@ def test_guess_python_requires_python2_tox_ini(tmpdir):
         '    Programming Language :: Python :: 3.5\n'
         '    Programming Language :: Python :: 3.6\n'
         '    Programming Language :: Python :: 3.7\n'
+        '    Programming Language :: Python :: Implementation :: CPython\n'
+        '    Programming Language :: Python :: Implementation :: PyPy\n'
         '\n'
         '[options]\n'
         'python_requires = >=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*\n'
@@ -508,6 +510,7 @@ def test_guess_python_requires_tox_ini_dashed_name(tmpdir):
         '    Programming Language :: Python :: 3\n'
         '    Programming Language :: Python :: 3 :: Only\n'
         '    Programming Language :: Python :: 3.7\n'
+        '    Programming Language :: Python :: Implementation :: CPython\n'
         '\n'
         '[options]\n'
         'python_requires = >=3.7\n'
@@ -520,7 +523,9 @@ def test_guess_python_requires_ignores_insufficient_version_envs(tmpdir):
     setup_cfg.write(
         '[metadata]\n'
         'name = pkg\n'
-        'version = 1.0\n',
+        'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: Implementation :: CPython\n',
     )
 
     assert not main((
@@ -531,6 +536,8 @@ def test_guess_python_requires_ignores_insufficient_version_envs(tmpdir):
         '[metadata]\n'
         'name = pkg\n'
         'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: Implementation :: CPython\n'
     )
 
 
@@ -703,6 +710,7 @@ def test_python_requires_with_patch_version(tmpdir):
         '    Programming Language :: Python :: 3.6\n'
         '    Programming Language :: Python :: 3.7\n'
         '    Programming Language :: Python :: 3.8\n'
+        '    Programming Language :: Python :: Implementation :: CPython\n'
         '\n'
         '[options]\n'
         'python_requires = >=3.6.1\n'
@@ -772,6 +780,7 @@ def test_min_py3_version_less_than_minimum(tmpdir):
         '    Programming Language :: Python :: 3 :: Only\n'
         '    Programming Language :: Python :: 3.6\n'
         '    Programming Language :: Python :: 3.7\n'
+        '    Programming Language :: Python :: Implementation :: CPython\n'
         '\n'
         '[options]\n'
         'python_requires = >=3.6\n'
@@ -807,4 +816,107 @@ def test_rewrite_extras(tmpdir):
         'dev =\n'
         '    hypothesis\n'
         '    pytest\n'
+    )
+
+
+def test_imp_classifiers_from_tox_ini(tmpdir):
+    tmpdir.join('tox.ini').write('[tox]\nenvlist = py39-django31,pypy3,docs\n')
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = test\n'
+        'classifiers =\n'
+        '    License :: OSI Approved :: MIT License\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.9\n',
+    )
+
+    args = (str(setup_cfg), '--min-py3-version=3.9', '--max-py-version=3.9')
+    assert main(args)
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = test\n'
+        'classifiers =\n'
+        '    License :: OSI Approved :: MIT License\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.9\n'
+        '    Programming Language :: Python :: Implementation :: CPython\n'
+        '    Programming Language :: Python :: Implementation :: PyPy\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.9\n'
+    )
+
+
+def test_imp_classifiers_no_change(tmpdir):
+    tmpdir.join('tox.ini').write('[tox]\nenvlist = py39,pypy3-django31\n')
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = test\n'
+        'classifiers =\n'
+        '    License :: OSI Approved :: MIT License\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.9\n'
+        '    Programming Language :: Python :: Implementation :: CPython\n'
+        '    Programming Language :: Python :: Implementation :: PyPy\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.9\n',
+    )
+
+    args = (str(setup_cfg), '--min-py3-version=3.9', '--max-py-version=3.9')
+    assert not main(args)
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = test\n'
+        'classifiers =\n'
+        '    License :: OSI Approved :: MIT License\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.9\n'
+        '    Programming Language :: Python :: Implementation :: CPython\n'
+        '    Programming Language :: Python :: Implementation :: PyPy\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.9\n'
+    )
+
+
+def test_imp_classifiers_pypy_only(tmpdir):
+    tmpdir.join('tox.ini').write('[tox]\nenvlist = pypy3\n')
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = test\n'
+        'classifiers =\n'
+        '    License :: OSI Approved :: MIT License\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.9\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.9\n',
+    )
+
+    args = (str(setup_cfg), '--min-py3-version=3.9', '--max-py-version=3.9')
+    assert main(args)
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = test\n'
+        'classifiers =\n'
+        '    License :: OSI Approved :: MIT License\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.9\n'
+        '    Programming Language :: Python :: Implementation :: PyPy\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.9\n'
     )
