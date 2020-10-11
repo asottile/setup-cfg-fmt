@@ -6,6 +6,7 @@ import os.path
 import re
 import string
 from typing import Dict
+from typing import Generator
 from typing import List
 from typing import Match
 from typing import Optional
@@ -151,6 +152,19 @@ def _parse_python_requires(
     return minimum, excluded
 
 
+def _tox_envlist(setup_cfg: str) -> Generator[str, None, None]:
+    tox_ini = _adjacent_filename(setup_cfg, 'tox.ini')
+    if os.path.exists(tox_ini):
+        cfg = configparser.ConfigParser()
+        cfg.read(tox_ini)
+
+        envlist = cfg.get('tox', 'envlist', fallback='')
+        if envlist:
+            for env in envlist.split(','):
+                env, _, _ = env.strip().partition('-')  # py36-foo
+                yield env
+
+
 def _python_requires(
         setup_cfg: str, *, min_py3_version: Tuple[int, int],
 ) -> Optional[str]:
@@ -164,24 +178,15 @@ def _python_requires(
     except UnknownVersionError:  # assume they know what's up with weird things
         return current_value
 
-    tox_ini = _adjacent_filename(setup_cfg, 'tox.ini')
-    if os.path.exists(tox_ini):
-        cfg = configparser.ConfigParser()
-        cfg.read(tox_ini)
-
-        envlist = cfg.get('tox', 'envlist', fallback='')
-        if envlist:
-            for env in envlist.split(','):
-                env = env.strip()
-                env, _, _ = env.partition('-')  # py36-foo
-                if (
-                        env.startswith('py') and
-                        len(env) == 4 and
-                        env[2:].isdigit()
-                ):
-                    version = _to_ver('.'.join(env[2:]))
-                    if minimum is None or version < minimum[:2]:
-                        minimum = version
+    for env in _tox_envlist(setup_cfg):
+        if (
+                env.startswith('py') and
+                len(env) == 4 and
+                env[2:].isdigit()
+        ):
+            version = _to_ver('.'.join(env[2:]))
+            if minimum is None or version < minimum[:2]:
+                minimum = version
 
     for classifier in classifiers.strip().splitlines():
         if classifier.startswith('Programming Language :: Python ::'):
@@ -322,34 +327,16 @@ def _trim_py_classifiers(
     return [s for s in classifiers if _is_ok_classifier(s)]
 
 
-def _imp_classifiers(cfg: configparser.ConfigParser, setup_cfg: str) -> str:
+def _imp_classifiers(setup_cfg: str) -> str:
+    classifiers = set()
 
-    classifiers = cfg.get('metadata', 'classifiers', fallback='')
-    tags = set()
+    for env in _tox_envlist(setup_cfg):
+        # remove trailing digits: py39-django31
+        classifier = TOX_TO_CLASSIFIERS.get(env.rstrip(string.digits))
+        if classifier is not None:
+            classifiers.add(classifier)
 
-    for classifier in classifiers.strip().splitlines():
-        if 'CPython' in classifier:
-            tags.add('py')
-        elif 'PyPy' in classifier:
-            tags.add('pypy')
-
-    tox_ini = _adjacent_filename(setup_cfg, 'tox.ini')
-    if os.path.exists(tox_ini):
-        cfg = configparser.ConfigParser()
-        cfg.read(tox_ini)
-
-        envlist = cfg.get('tox', 'envlist', fallback='')
-        if envlist:
-            for env in envlist.split(','):
-                # split into factors and remove trailing digits: py39-django31
-                factors = env.split('-')
-                factors = [s.rstrip(string.digits) for s in factors]
-                # test factors against tox keys avoiding duplicates
-                for factor in factors:
-                    if factor in TOX_TO_CLASSIFIERS and factor not in tags:
-                        tags.add(factor)
-
-    return '\n'.join(TOX_TO_CLASSIFIERS[tag] for tag in tags)
+    return '\n'.join(sorted(classifiers))
 
 
 def format_file(
@@ -422,7 +409,7 @@ def format_file(
             f'\n{py_classifiers}'
         )
 
-    imp_classifiers = _imp_classifiers(cfg, filename)
+    imp_classifiers = _imp_classifiers(filename)
     if imp_classifiers:
         cfg['metadata']['classifiers'] = (
             cfg['metadata'].get('classifiers', '').rstrip() +

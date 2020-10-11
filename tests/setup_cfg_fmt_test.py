@@ -820,7 +820,7 @@ def test_rewrite_extras(tmpdir):
 
 
 def test_imp_classifiers_from_tox_ini(tmpdir):
-    tmpdir.join('tox.ini').write('[tox]\nenvlist = py39-django31,pypy3\n')
+    tmpdir.join('tox.ini').write('[tox]\nenvlist = py39-django31,pypy3,docs\n')
     setup_cfg = tmpdir.join('setup.cfg')
     setup_cfg.write(
         '[metadata]\n'
@@ -831,7 +831,9 @@ def test_imp_classifiers_from_tox_ini(tmpdir):
         '    Programming Language :: Python :: 3 :: Only\n'
         '    Programming Language :: Python :: 3.9\n',
     )
-    main((str(setup_cfg),))
+
+    args = (str(setup_cfg), '--min-py3-version=3.9', '--max-py-version=3.9')
+    assert main(args)
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -867,7 +869,8 @@ def test_imp_classifiers_no_change(tmpdir):
         'python_requires = >=3.9\n',
     )
 
-    assert not main((str(setup_cfg),))
+    args = (str(setup_cfg), '--min-py3-version=3.9', '--max-py-version=3.9')
+    assert not main(args)
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -901,7 +904,8 @@ def test_imp_classifiers_pypy_only(tmpdir):
         'python_requires = >=3.9\n',
     )
 
-    assert main((str(setup_cfg),))
+    args = (str(setup_cfg), '--min-py3-version=3.9', '--max-py-version=3.9')
+    assert main(args)
 
     assert setup_cfg.read() == (
         '[metadata]\n'
