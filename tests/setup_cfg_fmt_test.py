@@ -231,6 +231,7 @@ def test_rewrite(input_s, expected, tmpdir):
         pytest.param('req05 <= 2,!=1', 'req05!=1,<=2', id='<= cond at end'),
         pytest.param('req13 !=2, >= 7', 'req13!=2,>=7', id='>= cond at end'),
         pytest.param('req14 <=2, >= 1', 'req14>=1,<=2', id='b/w conds sorted'),
+        pytest.param('req15~=2', 'req15~=2', id='compatible release'),
     ),
 )
 def test_normalize_lib(lib, expected):
