@@ -4,6 +4,7 @@ import os
 import pytest
 
 from setup_cfg_fmt import _case_insensitive_glob
+from setup_cfg_fmt import _natural_sort
 from setup_cfg_fmt import _normalize_lib
 from setup_cfg_fmt import _ver_type
 from setup_cfg_fmt import main
@@ -921,3 +922,25 @@ def test_imp_classifiers_pypy_only(tmpdir):
         '[options]\n'
         'python_requires = >=3.9\n'
     )
+
+
+def test_natural_sort():
+    classifiers = [
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3 :: Only',
+    ]
+
+    sorted_classifiers = _natural_sort(classifiers)
+
+    assert sorted_classifiers == [
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+    ]
