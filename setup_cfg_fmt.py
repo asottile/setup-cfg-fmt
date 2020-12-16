@@ -339,6 +339,16 @@ def _imp_classifiers(setup_cfg: str) -> str:
     return '\n'.join(sorted(classifiers))
 
 
+def _natural_sort(items: Sequence[str]) -> List[str]:
+    return sorted(
+        set(items),
+        key=lambda s: [
+            int(part) if part.isdigit() else part.lower()
+            for part in re.split(r'(\d+)', s)
+        ],
+    )
+
+
 def format_file(
         filename: str, *,
         min_py3_version: Tuple[int, int],
@@ -418,7 +428,7 @@ def format_file(
 
     # sort the classifiers if present
     if 'classifiers' in cfg['metadata']:
-        classifiers = sorted(set(cfg['metadata']['classifiers'].split('\n')))
+        classifiers = _natural_sort(cfg['metadata']['classifiers'].split('\n'))
         classifiers = _trim_py_classifiers(
             classifiers, requires, max_py_version=max_py_version,
         )
