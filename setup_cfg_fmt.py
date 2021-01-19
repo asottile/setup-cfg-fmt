@@ -492,7 +492,7 @@ def _ver_type(s: str) -> Version:
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument('filenames', nargs='*')
+    parser.add_argument('filenames', nargs='*', default=['setup.cfg'])
     parser.add_argument('--min-py3-version', type=_ver_type, default=(3, 6))
     parser.add_argument('--max-py-version', type=_ver_type, default=(3, 9))
     args = parser.parse_args(argv)
