@@ -34,7 +34,7 @@ KEYS_ORDER: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
             'packages', 'py_modules', 'install_requires', 'python_requires',
         ),
     ),
-    ('options.sections.find', ('where', 'exclude', 'include')),
+    ('options.packages.find', ('where', 'exclude', 'include')),
     ('options.entry_points', ('console_scripts',)),
     ('options.extras_require', ()),
     ('options.package_data', ()),
