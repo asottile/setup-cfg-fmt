@@ -152,6 +152,29 @@ def test_rewrite_requires(which, input_tpl, expected_tpl, tmpdir):
             id='orders fields and sections',
         ),
         pytest.param(
+            '[bdist_wheel]\n'
+            'universal = true\n'
+            '\n'
+            '[metadata]\n'
+            'name = pkg\n'
+            'version = 1.0\n'
+            '\n'
+            '[options.packages.find]\n'
+            'where = src\n',
+
+            '[metadata]\n'
+            'name = pkg\n'
+            'version = 1.0\n'
+            '\n'
+            '[options.packages.find]\n'
+            'where = src\n'
+            '\n'
+            '[bdist_wheel]\n'
+            'universal = true\n',
+
+            id='orders sections (options.packages.find)',
+        ),
+        pytest.param(
             '[metadata]\n'
             'name = pkg-name\n'
             'version = 1.0\n',
