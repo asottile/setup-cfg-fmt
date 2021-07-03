@@ -381,7 +381,7 @@ def format_file(
     # set license fields if a license exists
     license_filename = _first_file(filename, 'licen[sc]e')
     if license_filename is not None:
-        cfg['metadata']['license_file'] = os.path.basename(license_filename)
+        cfg['metadata']['license_files'] = os.path.basename(license_filename)
 
         license_id = identify.license_id(license_filename)
         if license_id is not None:
