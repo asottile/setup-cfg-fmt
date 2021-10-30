@@ -259,7 +259,8 @@ def _normalize_lib(lib: str) -> str:
 def _req_base(lib: str) -> str:
     basem = re.match(BASE_NAME_REGEX, lib)
     assert basem
-    return basem.group(0)
+    # pip replaces _ with - in package names
+    return basem.group(0).replace('_', '-')
 
 
 def _py_classifiers(
