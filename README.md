@@ -1,6 +1,6 @@
-[![Build Status](https://dev.azure.com/asottile/asottile/_apis/build/status/asottile.setup-cfg-fmt?branchName=master)](https://dev.azure.com/asottile/asottile/_build/latest?definitionId=51&branchName=master)
-[![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/asottile/asottile/51/master.svg)](https://dev.azure.com/asottile/asottile/_build/latest?definitionId=51&branchName=master)
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/asottile/setup-cfg-fmt/master.svg)](https://results.pre-commit.ci/latest/github/asottile/setup-cfg-fmt/master)
+[![Build Status](https://dev.azure.com/asottile/asottile/_apis/build/status/asottile.setup-cfg-fmt?branchName=main)](https://dev.azure.com/asottile/asottile/_build/latest?definitionId=51&branchName=main)
+[![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/asottile/asottile/51/main.svg)](https://dev.azure.com/asottile/asottile/_build/latest?definitionId=51&branchName=main)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/asottile/setup-cfg-fmt/main.svg)](https://results.pre-commit.ci/latest/github/asottile/setup-cfg-fmt/main)
 
 setup-cfg-fmt
 =============
