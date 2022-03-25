@@ -7,13 +7,9 @@ import io
 import os.path
 import re
 import string
-from typing import Dict
 from typing import Generator
-from typing import List
 from typing import Match
-from typing import Optional
 from typing import Sequence
-from typing import Set
 from typing import Tuple
 
 from identify import identify
