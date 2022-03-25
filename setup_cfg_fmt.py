@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import configparser
 import glob
@@ -18,7 +20,7 @@ from identify import identify
 
 Version = Tuple[int, ...]
 
-KEYS_ORDER: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
+KEYS_ORDER: tuple[tuple[str, tuple[str, ...]], ...] = (
     (
         'metadata', (
             'name', 'version', 'description',
@@ -96,7 +98,7 @@ def _case_insensitive_glob(s: str) -> str:
     return GLOB_PART.sub(cb, s)
 
 
-def _first_file(setup_cfg: str, prefix: str) -> Optional[str]:
+def _first_file(setup_cfg: str, prefix: str) -> str | None:
     prefix = _case_insensitive_glob(prefix)
     path = _adjacent_filename(setup_cfg, prefix)
     for filename in sorted(glob.iglob(f'{path}*')):
@@ -106,12 +108,12 @@ def _first_file(setup_cfg: str, prefix: str) -> Optional[str]:
         return None
 
 
-def _py3_excluded(min_py3_version: Tuple[int, int]) -> Set[Tuple[int, int]]:
+def _py3_excluded(min_py3_version: tuple[int, int]) -> set[tuple[int, int]]:
     _, end = min_py3_version
     return {(3, i) for i in range(end)}
 
 
-def _format_python_requires(minimum: Version, excluded: Set[Version]) -> str:
+def _format_python_requires(minimum: Version, excluded: set[Version]) -> str:
     return ', '.join((
         f'>={_v(minimum)}', *(f'!={_v(v)}.*' for v in sorted(excluded)),
     ))
@@ -134,8 +136,8 @@ def _v(x: Version) -> str:
 
 
 def _parse_python_requires(
-        python_requires: Optional[str],
-) -> Tuple[Optional[Version], Set[Version]]:
+        python_requires: str | None,
+) -> tuple[Version | None, set[Version]]:
     minimum = None
     excluded = set()
 
@@ -166,8 +168,8 @@ def _tox_envlist(setup_cfg: str) -> Generator[str, None, None]:
 
 
 def _python_requires(
-        setup_cfg: str, *, min_py3_version: Tuple[int, int],
-) -> Optional[str]:
+        setup_cfg: str, *, min_py3_version: tuple[int, int],
+) -> str | None:
     cfg = configparser.ConfigParser()
     cfg.read(setup_cfg)
     current_value = cfg.get('options', 'python_requires', fallback='')
@@ -210,7 +212,7 @@ def _python_requires(
 
 def _requires(
         cfg: configparser.ConfigParser, which: str, section: str = 'options',
-) -> List[str]:
+) -> list[str]:
     raw = cfg.get(section, which, fallback='')
 
     require_group = raw.strip().splitlines()
@@ -264,8 +266,8 @@ def _req_base(lib: str) -> str:
 
 
 def _py_classifiers(
-        python_requires: Optional[str], *, max_py_version: Tuple[int, int],
-) -> Optional[str]:
+        python_requires: str | None, *, max_py_version: tuple[int, int],
+) -> str | None:
     try:
         minimum, exclude = _parse_python_requires(python_requires)
     except UnknownVersionError:
@@ -277,7 +279,7 @@ def _py_classifiers(
         # classifiers only use the first two segments of version
         minimum = minimum[:2]
 
-    versions: Set[Version] = set()
+    versions: set[Version] = set()
     while minimum <= max_py_version:
         if minimum not in exclude:
             versions.add(minimum)
@@ -297,11 +299,11 @@ def _py_classifiers(
 
 
 def _trim_py_classifiers(
-        classifiers: List[str],
-        python_requires: Optional[str],
+        classifiers: list[str],
+        python_requires: str | None,
         *,
-        max_py_version: Tuple[int, int],
-) -> List[str]:
+        max_py_version: tuple[int, int],
+) -> list[str]:
     try:
         minimum, exclude = _parse_python_requires(python_requires)
     except UnknownVersionError:
@@ -340,7 +342,7 @@ def _imp_classifiers(setup_cfg: str) -> str:
     return '\n'.join(sorted(classifiers))
 
 
-def _natural_sort(items: Sequence[str]) -> List[str]:
+def _natural_sort(items: Sequence[str]) -> list[str]:
     return sorted(
         set(items),
         key=lambda s: [
@@ -352,8 +354,8 @@ def _natural_sort(items: Sequence[str]) -> List[str]:
 
 def format_file(
         filename: str, *,
-        min_py3_version: Tuple[int, int],
-        max_py_version: Tuple[int, int],
+        min_py3_version: tuple[int, int],
+        max_py_version: tuple[int, int],
 ) -> bool:
     with open(filename) as f:
         contents = f.read()
@@ -435,7 +437,7 @@ def format_file(
         )
         cfg['metadata']['classifiers'] = '\n'.join(classifiers)
 
-    sections: Dict[str, Dict[str, str]] = {}
+    sections: dict[str, dict[str, str]] = {}
     for section, key_order in KEYS_ORDER:
         if section not in cfg:
             continue
@@ -491,7 +493,7 @@ def _ver_type(s: str) -> Version:
         return version
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('filenames', nargs='*')
     parser.add_argument('--min-py3-version', type=_ver_type, default=(3, 6))
