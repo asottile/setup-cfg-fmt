@@ -75,6 +75,12 @@ TOX_TO_CLASSIFIERS = {
 }
 
 
+class NoTransformConfigParser(configparser.RawConfigParser):
+    def optionxform(self, s: str) -> str:
+        """disable default lower-casing"""
+        return s
+
+
 def _adjacent_filename(setup_cfg: str, filename: str) -> str:
     return os.path.join(os.path.dirname(setup_cfg), filename)
 
@@ -153,7 +159,7 @@ def _parse_python_requires(
 def _tox_envlist(setup_cfg: str) -> Generator[str, None, None]:
     tox_ini = _adjacent_filename(setup_cfg, 'tox.ini')
     if os.path.exists(tox_ini):
-        cfg = configparser.ConfigParser()
+        cfg = NoTransformConfigParser()
         cfg.read(tox_ini)
 
         envlist = cfg.get('tox', 'envlist', fallback='')
@@ -166,7 +172,7 @@ def _tox_envlist(setup_cfg: str) -> Generator[str, None, None]:
 def _python_requires(
         setup_cfg: str, *, min_py3_version: tuple[int, int],
 ) -> str | None:
-    cfg = configparser.ConfigParser()
+    cfg = NoTransformConfigParser()
     cfg.read(setup_cfg)
     current_value = cfg.get('options', 'python_requires', fallback='')
     classifiers = cfg.get('metadata', 'classifiers', fallback='')
@@ -207,7 +213,7 @@ def _python_requires(
 
 
 def _requires(
-        cfg: configparser.ConfigParser, which: str, section: str = 'options',
+        cfg: NoTransformConfigParser, which: str, section: str = 'options',
 ) -> list[str]:
     raw = cfg.get(section, which, fallback='')
 
@@ -356,7 +362,7 @@ def format_file(
     with open(filename) as f:
         contents = f.read()
 
-    cfg = configparser.ConfigParser()
+    cfg = NoTransformConfigParser()
     cfg.read_string(contents)
     _clean_sections(cfg)
 
@@ -467,7 +473,7 @@ def format_file(
     return new_contents != contents
 
 
-def _clean_sections(cfg: configparser.ConfigParser) -> None:
+def _clean_sections(cfg: NoTransformConfigParser) -> None:
     """Removes any empty options and sections."""
     for section in cfg.sections():
         new_options = {k: v for k, v in cfg[section].items() if v}

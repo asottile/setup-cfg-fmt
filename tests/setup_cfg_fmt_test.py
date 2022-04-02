@@ -951,6 +951,22 @@ def test_imp_classifiers_pypy_only(tmpdir):
     )
 
 
+def test_leaves_casing_of_unrelated_settings(tmpdir):
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: Implementation :: CPython\n'
+        '\n'
+        '[tool:pytest]\n'
+        'DJANGO_SETTINGS_MODULE = test.test\n',
+    )
+
+    assert not main((str(setup_cfg),))
+
+
 def test_natural_sort():
     classifiers = [
         'Programming Language :: Python :: 3',
