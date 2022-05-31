@@ -332,7 +332,7 @@ def test_sets_license_file_if_license_exists(filename, tmpdir):
         f'[metadata]\n'
         f'name = pkg\n'
         f'version = 1.0\n'
-        f'license_file = {filename}\n'
+        f'license_files = {filename}\n'
     )
 
 
@@ -360,7 +360,7 @@ def test_rewrite_sets_license_type_and_classifier(tmpdir):
         'name = pkg\n'
         'version = 1.0\n'
         'license = MIT\n'
-        'license_file = LICENSE\n'
+        'license_files = LICENSE\n'
         'classifiers =\n'
         '    License :: OSI Approved :: MIT License\n'
     )
@@ -403,7 +403,7 @@ freely, subject to the following restrictions:
         'name = pkg\n'
         'version = 1.0\n'
         'license = Zlib\n'
-        'license_file = LICENSE\n'
+        'license_files = LICENSE\n'
         'classifiers =\n'
         '    License :: OSI Approved :: zlib/libpng License\n'
     )
