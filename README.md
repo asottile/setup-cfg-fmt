@@ -95,7 +95,7 @@ setuptools allows dashed names but does not document them.
 +long_description = file: README.md
 ```
 
-### adds `long_description` if `README.md` is present
+### adds `long_description` if `README` is present
 
 This will show up on the pypi project page
 
