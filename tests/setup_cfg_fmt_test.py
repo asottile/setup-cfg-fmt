@@ -296,6 +296,68 @@ def test_adds_long_description_with_readme(filename, content_type, tmpdir):
     )
 
 
+@pytest.mark.parametrize(
+    ('filename', 'content_type'),
+    (
+        ('README.rst', 'text/x-rst'),
+        ('README.markdown', 'text/markdown'),
+        ('README.md', 'text/markdown'),
+        ('README', 'text/plain'),
+        ('README.txt', 'text/plain'),
+        ('readme.txt', 'text/plain'),
+    ),
+)
+def test_readme_discover_does_not_prefer_adoc(filename, content_type, tmpdir):
+    tmpdir.join(filename).write('my project!')
+    tmpdir.join('README.adoc').write('my project!')
+    tmpdir.join('README.asciidoc').write('my project!')
+
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n',
+    )
+
+    assert main((str(setup_cfg),))
+
+    assert setup_cfg.read() == (
+        f'[metadata]\n'
+        f'name = pkg\n'
+        f'version = 1.0\n'
+        f'long_description = file: {filename}\n'
+        f'long_description_content_type = {content_type}\n'
+    )
+
+
+@pytest.mark.parametrize(
+    'filename',
+    (
+        'README.adoc',
+        'README.asciidoc',
+    ),
+)
+def test_readme_discover_uses_asciidoc_if_none_other_found(filename, tmpdir):
+    tmpdir.join(filename).write('my project!')
+
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n',
+    )
+
+    assert main((str(setup_cfg),))
+
+    assert setup_cfg.read() == (
+        f'[metadata]\n'
+        f'name = pkg\n'
+        f'version = 1.0\n'
+        f'long_description = file: {filename}\n'
+        f'long_description_content_type = text/plain\n'
+    )
+
+
 def test_readme_discover_prefers_file_over_directory(tmpdir):
     tmpdir.join('README').mkdir()
     tmpdir.join('README.md').write('my project!')

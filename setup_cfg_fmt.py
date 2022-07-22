@@ -103,7 +103,13 @@ def _case_insensitive_glob(s: str) -> str:
 def _first_file(setup_cfg: str, prefix: str) -> str | None:
     prefix = _case_insensitive_glob(prefix)
     path = _adjacent_filename(setup_cfg, prefix)
-    for filename in sorted(glob.iglob(f'{path}*')):
+
+    # prefer non-asciidoc because pypi does not render it
+    # https://github.com/asottile/setup-cfg-fmt/issues/149
+    def sort_key(filename: str) -> tuple[bool, str]:
+        return (filename.endswith(('.adoc', '.asciidoc')), filename)
+
+    for filename in sorted(glob.iglob(f'{path}*'), key=sort_key):
         if os.path.isfile(filename):
             return filename
     else:
@@ -369,7 +375,7 @@ def format_file(
     # normalize names to underscores so sdist / wheel have the same prefix
     cfg['metadata']['name'] = cfg['metadata']['name'].replace('-', '_')
 
-    # if README.md exists, set `long_description` + content type
+    # if README exists, set `long_description` + content type
     readme = _first_file(filename, 'readme')
     if readme is not None:
         long_description = f'file: {os.path.basename(readme)}'
