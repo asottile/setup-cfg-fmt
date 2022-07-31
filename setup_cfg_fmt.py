@@ -310,6 +310,7 @@ def _trim_py_classifiers(
         classifiers: list[str],
         python_requires: str | None,
         *,
+        include_version_classifiers: bool,
         max_py_version: tuple[int, int],
 ) -> list[str]:
     try:
@@ -331,8 +332,12 @@ def _trim_py_classifiers(
         ver = tuple(int(p) for p in parts[-1].strip().split('.'))
         size = len(ver)
         return (
-            ver not in exclude and
-            minimum[:size] <= ver <= max_py_version[:size]
+            ver not in exclude and (
+                size == 1 or (
+                    include_version_classifiers and
+                    minimum[:size] <= ver <= max_py_version[:size]
+                )
+            )
         )
 
     return [s for s in classifiers if _is_ok_classifier(s)]
@@ -362,6 +367,7 @@ def _natural_sort(items: Sequence[str]) -> list[str]:
 
 def format_file(
         filename: str, *,
+        include_version_classifiers: bool,
         min_py3_version: tuple[int, int],
         max_py_version: tuple[int, int],
 ) -> bool:
@@ -441,7 +447,10 @@ def format_file(
     if 'classifiers' in cfg['metadata']:
         classifiers = _natural_sort(cfg['metadata']['classifiers'].split('\n'))
         classifiers = _trim_py_classifiers(
-            classifiers, requires, max_py_version=max_py_version,
+            classifiers,
+            requires,
+            max_py_version=max_py_version,
+            include_version_classifiers=include_version_classifiers,
         )
         cfg['metadata']['classifiers'] = '\n'.join(classifiers)
 
@@ -504,6 +513,7 @@ def _ver_type(s: str) -> Version:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('filenames', nargs='*')
+    parser.add_argument('--include-version-classifiers', action='store_true')
     parser.add_argument('--min-py3-version', type=_ver_type, default=(3, 6))
     parser.add_argument('--max-py-version', type=_ver_type, default=(3, 10))
     args = parser.parse_args(argv)
@@ -512,6 +522,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     for filename in args.filenames:
         if format_file(
                 filename,
+                include_version_classifiers=args.include_version_classifiers,
                 min_py3_version=args.min_py3_version,
                 max_py_version=args.max_py_version,
         ):
