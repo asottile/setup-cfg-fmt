@@ -558,8 +558,12 @@ def test_guess_python_requires_python2_tox_ini(tmpdir):
         'version = 1.0\n',
     )
 
-    args = (str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7')
-    assert main(args)
+    assert main((
+        str(setup_cfg),
+        '--include-version-classifiers',
+        '--min-py3-version=3.4',
+        '--max-py-version=3.7',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -590,8 +594,12 @@ def test_guess_python_requires_tox_ini_dashed_name(tmpdir):
         'version = 1.0\n',
     )
 
-    args = (str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7')
-    assert main(args)
+    assert main((
+        str(setup_cfg),
+        '--include-version-classifiers',
+        '--min-py3-version=3.4',
+        '--max-py-version=3.7',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -645,8 +653,12 @@ def test_guess_python_requires_from_classifiers(tmpdir):
         '    Programming Language :: Python :: 3.6\n',
     )
 
-    args = (str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7')
-    assert main(args)
+    assert main((
+        str(setup_cfg),
+        '--include-version-classifiers',
+        '--min-py3-version=3.4',
+        '--max-py-version=3.7',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -677,8 +689,12 @@ def test_min_py3_version_updates_python_requires(tmpdir):
         'python_requires = >=2.7, !=3.0.*, !=3.1.*\n',
     )
 
-    args = (str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7')
-    assert main(args)
+    assert main((
+        str(setup_cfg),
+        '--include-version-classifiers',
+        '--min-py3-version=3.4',
+        '--max-py-version=3.7',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -709,8 +725,12 @@ def test_min_py3_version_greater_than_minimum(tmpdir):
         'python_requires = >=3.2\n',
     )
 
-    args = (str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7')
-    assert main(args)
+    assert main((
+        str(setup_cfg),
+        '--include-version-classifiers',
+        '--min-py3-version=3.4',
+        '--max-py-version=3.7',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -749,8 +769,12 @@ def test_min_version_removes_classifiers(tmpdir):
         'python_requires = >=3.2, !=3.6.*\n',
     )
 
-    args = (str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7')
-    assert main(args)
+    assert main((
+        str(setup_cfg),
+        '--include-version-classifiers',
+        '--min-py3-version=3.4',
+        '--max-py-version=3.7',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -788,8 +812,12 @@ def test_python_requires_with_patch_version(tmpdir):
     # added this to make sure it doesn't revert to 3.6
     tmpdir.join('tox.ini').write('[tox]\nenvlist=py36\n')
 
-    args = (str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.8')
-    assert main(args)
+    assert main((
+        str(setup_cfg),
+        '--include-version-classifiers',
+        '--min-py3-version=3.4',
+        '--max-py-version=3.8',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -859,8 +887,12 @@ def test_min_py3_version_less_than_minimum(tmpdir):
         'version = 1.0\n',
     )
 
-    args = (str(setup_cfg), '--min-py3-version=3.4', '--max-py-version=3.7')
-    assert main(args)
+    assert main((
+        str(setup_cfg),
+        '--include-version-classifiers',
+        '--min-py3-version=3.4',
+        '--max-py-version=3.7',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -923,8 +955,12 @@ def test_imp_classifiers_from_tox_ini(tmpdir):
         '    Programming Language :: Python :: 3.9\n',
     )
 
-    args = (str(setup_cfg), '--min-py3-version=3.9', '--max-py-version=3.9')
-    assert main(args)
+    assert main((
+        str(setup_cfg),
+        '--include-version-classifiers',
+        '--min-py3-version=3.9',
+        '--max-py-version=3.9',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -960,8 +996,12 @@ def test_imp_classifiers_no_change(tmpdir):
         'python_requires = >=3.9\n',
     )
 
-    args = (str(setup_cfg), '--min-py3-version=3.9', '--max-py-version=3.9')
-    assert not main(args)
+    assert not main((
+        str(setup_cfg),
+        '--include-version-classifiers',
+        '--min-py3-version=3.9',
+        '--max-py-version=3.9',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -995,8 +1035,12 @@ def test_imp_classifiers_pypy_only(tmpdir):
         'python_requires = >=3.9\n',
     )
 
-    args = (str(setup_cfg), '--min-py3-version=3.9', '--max-py-version=3.9')
-    assert main(args)
+    assert main((
+        str(setup_cfg),
+        '--include-version-classifiers',
+        '--min-py3-version=3.9',
+        '--max-py-version=3.9',
+    ))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
@@ -1010,6 +1054,38 @@ def test_imp_classifiers_pypy_only(tmpdir):
         '\n'
         '[options]\n'
         'python_requires = >=3.9\n'
+    )
+
+
+def test_version_classifiers_removed_by_default(tmpdir):
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = test\n'
+        'classifiers =\n'
+        '    License :: OSI Approved :: MIT License\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.7\n'
+        '    Programming Language :: Python :: 3.8\n'
+        '    Programming Language :: Python :: 3.9\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.7\n',
+    )
+
+    assert main((str(setup_cfg), '--min-py3-version=3.7'))
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = test\n'
+        'classifiers =\n'
+        '    License :: OSI Approved :: MIT License\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.7\n'
     )
 
 

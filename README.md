@@ -143,6 +143,7 @@ classifiers are generated based on:
 
 - the `python_requires` setting
 - the `--max-py-version` argument (currently defaulting to `3.10`)
+- `--include-version-classifiers` is specified
 
 ```diff
  name = pkg
@@ -156,6 +157,16 @@ classifiers are generated based on:
 +    Programming Language :: Python :: 3.8
 +    Programming Language :: Python :: 3.9
 +    Programming Language :: Python :: 3.10
+```
+
+without `--include-version-specifiers` only the major version will be included:
+
+```diff
+ name = pkg
+ version = 1.0
++classifiers =
++    Programming Language :: Python :: 2
++    Programming Language :: Python :: 3
 ```
 
 ### sorts classifiers
