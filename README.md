@@ -9,7 +9,9 @@ apply a consistent format to `setup.cfg` files
 
 ## installation
 
-`pip install setup-cfg-fmt`
+```bash
+pip install setup-cfg-fmt
+```
 
 ## as a pre-commit hook
 
