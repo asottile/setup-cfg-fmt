@@ -161,7 +161,7 @@ classifiers are generated based on:
 +    Programming Language :: Python :: 3.10
 ```
 
-without `--include-version-specifiers` only the major version will be included:
+without `--include-version-classifiers` only the major version will be included:
 
 ```diff
  name = pkg
