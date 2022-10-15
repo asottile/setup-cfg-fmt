@@ -403,6 +403,47 @@ def test_license_does_not_match_directories(tmpdir):
     test_sets_license_file_if_license_exists('LICENSE', tmpdir)
 
 
+def test_license_does_not_set_when_licenses_matches(tmpdir):
+    tmpdir.join('LICENSE').write('COPYRIGHT (C) 2019 ME')
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'license_files = LICENSE\n',
+    )
+
+    assert not main((str(setup_cfg),))
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'license_files = LICENSE\n'
+    )
+
+
+def test_license_does_set_when_licenses_mismatches(tmpdir):
+    tmpdir.join('LICENSE').write('COPYRIGHT (C) 2019 ME')
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'license_files = LICENSES\n',
+    )
+
+    assert main((str(setup_cfg),))
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'license_file = LICENSE\n'
+        'license_files = LICENSES\n'
+    )
+
+
 def test_rewrite_sets_license_type_and_classifier(tmpdir):
     here = os.path.dirname(__file__)
     license_file = os.path.join(here, os.pardir, 'LICENSE')
