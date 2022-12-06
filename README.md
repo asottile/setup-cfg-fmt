@@ -32,13 +32,6 @@ Consult the help for the latest usage:
 
 ```console
 $ setup-cfg-fmt --help
-usage: setup-cfg-fmt [-h] [filenames [filenames ...]]
-
-positional arguments:
-  filenames
-
-optional arguments:
-  -h, --help  show this help message and exit
 ```
 
 ## what does it do?
