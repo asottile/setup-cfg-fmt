@@ -121,16 +121,7 @@ A few sources are searched for guessing `python_requires`:
 - the existing `python_requires` setting itself
 - `envlist` in `tox.ini` if present
 - python version `classifiers` that are already set
-- the `--min-py3-version` argument (currently defaulting to `3.7`)
-
-If the minimum version is detected as python2, the `--min-py3-version`
-argument will be used to exclude python3.x versions (see below).
-
-```diff
- [options]
- py_modules = pre_commit
-+python_requires = >=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*
-```
+- the `--min-py-version` argument (currently defaulting to `3.7)
 
 ### adds python version classifiers
 
@@ -144,8 +135,6 @@ classifiers are generated based on:
  name = pkg
  version = 1.0
 +classifiers =
-+    Programming Language :: Python :: 2
-+    Programming Language :: Python :: 2.7
 +    Programming Language :: Python :: 3
 +    Programming Language :: Python :: 3.7
 +    Programming Language :: Python :: 3.8
@@ -160,7 +149,6 @@ without `--include-version-classifiers` only the major version will be included:
  name = pkg
  version = 1.0
 +classifiers =
-+    Programming Language :: Python :: 2
 +    Programming Language :: Python :: 3
 ```
 
