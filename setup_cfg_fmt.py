@@ -175,6 +175,9 @@ def _tox_envlist(setup_cfg: str) -> Generator[str, None, None]:
                 yield env
 
 
+TOX_ENV = re.compile(r'py(\d)(\d+)')
+
+
 def _python_requires(
         setup_cfg: str, *, min_py3_version: tuple[int, int],
 ) -> str | None:
@@ -189,12 +192,9 @@ def _python_requires(
         return current_value
 
     for env in _tox_envlist(setup_cfg):
-        if (
-                env.startswith('py') and
-                len(env) == 4 and
-                env[2:].isdigit()
-        ):
-            version = _to_ver('.'.join(env[2:]))
+        match = TOX_ENV.match(env)
+        if match:
+            version = _to_ver('.'.join(match.groups()))
             if minimum is None or version < minimum[:2]:
                 minimum = version
 

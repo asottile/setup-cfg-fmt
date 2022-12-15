@@ -657,6 +657,37 @@ def test_guess_python_requires_tox_ini_dashed_name(tmpdir):
     )
 
 
+def test_guess_python_requires_tox_ini_py310(tmpdir):
+    tmpdir.join('tox.ini').write('[tox]\nenvlist = py310\n')
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n',
+    )
+
+    assert main((
+        str(setup_cfg),
+        '--include-version-classifiers',
+        '--min-py3-version=3.4',
+    ))
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.10\n'
+        '    Programming Language :: Python :: 3.11\n'
+        '    Programming Language :: Python :: Implementation :: CPython\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.10\n'
+    )
+
+
 def test_guess_python_requires_ignores_insufficient_version_envs(tmpdir):
     tmpdir.join('tox.ini').write('[tox]\nenvlist = py,py2,py3\n')
     setup_cfg = tmpdir.join('setup.cfg')
