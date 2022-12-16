@@ -115,12 +115,14 @@ This will show up on the pypi project page
 
 ### set `python_requires`
 
-A few sources are searched for guessing `python_requires`:
+If `--min-py-version` is set, it will be used as the source of truth
+for `python_requires`.
 
+Otherwise, a few sources are searched for guessing `python_requires`:
 - the existing `python_requires` setting itself
 - `envlist` in `tox.ini` if present
 - python version `classifiers` that are already set
-- the `--min-py-version` argument (currently defaulting to `3.7`)
+- the default for the `--min-py-version` argument (currently `3.7`)
 
 ### adds python version classifiers
 
