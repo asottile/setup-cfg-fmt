@@ -116,11 +116,6 @@ def _first_file(setup_cfg: str, prefix: str) -> str | None:
         return None
 
 
-def _py3_excluded(min_py3_version: tuple[int, int]) -> set[tuple[int, int]]:
-    _, end = min_py3_version
-    return {(3, i) for i in range(end)}
-
-
 def _format_python_requires(minimum: Version, excluded: set[Version]) -> str:
     return ', '.join((
         f'>={_v(minimum)}', *(f'!={_v(v)}.*' for v in sorted(excluded)),
@@ -175,11 +170,11 @@ def _tox_envlist(setup_cfg: str) -> Generator[str, None, None]:
                 yield env
 
 
-TOX_ENV = re.compile(r'py(\d)(\d+)')
+TOX_ENV = re.compile(r'py3(\d+)')
 
 
 def _python_requires(
-        setup_cfg: str, *, min_py3_version: tuple[int, int],
+        setup_cfg: str, *, min_py_version: tuple[int, int],
 ) -> str | None:
     cfg = NoTransformConfigParser()
     cfg.read(setup_cfg)
@@ -194,12 +189,12 @@ def _python_requires(
     for env in _tox_envlist(setup_cfg):
         match = TOX_ENV.match(env)
         if match:
-            version = _to_ver('.'.join(match.groups()))
+            version = _to_ver(f'3.{match[1]}')
             if minimum is None or version < minimum[:2]:
                 minimum = version
 
     for classifier in classifiers.strip().splitlines():
-        if classifier.startswith('Programming Language :: Python ::'):
+        if classifier.startswith('Programming Language :: Python :: 3'):
             version_part = classifier.split()[-1]
             if '.' not in version_part:
                 continue
@@ -209,11 +204,8 @@ def _python_requires(
 
     if minimum is None:
         return None
-    elif minimum[0] == 2:
-        excluded.update(_py3_excluded(min_py3_version))
-        return _format_python_requires(minimum, excluded)
-    elif min_py3_version > minimum:
-        return _format_python_requires(min_py3_version, excluded)
+    elif min_py_version > minimum:
+        return _format_python_requires(min_py_version, excluded)
     else:
         return _format_python_requires(minimum, excluded)
 
@@ -292,16 +284,12 @@ def _py_classifiers(
         if minimum not in exclude:
             versions.add(minimum)
             versions.add(minimum[:1])
-        if minimum == (2, 7):
-            minimum = (3, 0)
-        else:
-            minimum = (minimum[0], minimum[1] + 1)
+        minimum = (minimum[0], minimum[1] + 1)
 
     classifiers = [
         f'Programming Language :: Python :: {_v(v)}' for v in versions
     ]
-    if (3,) in versions and (2,) not in versions:
-        classifiers.append('Programming Language :: Python :: 3 :: Only')
+    classifiers.append('Programming Language :: Python :: 3 :: Only')
 
     return '\n'.join(classifiers)
 
@@ -332,7 +320,7 @@ def _trim_py_classifiers(
         ver = tuple(int(p) for p in parts[-1].strip().split('.'))
         size = len(ver)
         return (
-            ver not in exclude and (
+            ver >= (3,) and ver not in exclude and (
                 size == 1 or (
                     include_version_classifiers and
                     minimum[:size] <= ver <= max_py_version[:size]
@@ -368,7 +356,7 @@ def _natural_sort(items: Sequence[str]) -> list[str]:
 def format_file(
         filename: str, *,
         include_version_classifiers: bool,
-        min_py3_version: tuple[int, int],
+        min_py_version: tuple[int, int],
         max_py_version: tuple[int, int],
 ) -> bool:
     with open(filename) as f:
@@ -415,7 +403,7 @@ def format_file(
                 f'\n{LICENSE_TO_CLASSIFIER[license_id]}'
             )
 
-    requires = _python_requires(filename, min_py3_version=min_py3_version)
+    requires = _python_requires(filename, min_py_version=min_py_version)
     if requires is not None:
         if not cfg.has_section('options'):
             cfg.add_section('options')
@@ -511,6 +499,8 @@ def _ver_type(s: str) -> Version:
 
     if len(version) != 2:
         raise argparse.ArgumentTypeError(f'expected #.#, got {s!r}')
+    elif version[0] < 3:
+        raise argparse.ArgumentTypeError(f'must be at least 3, got {s!r}')
     else:
         return version
 
@@ -519,16 +509,29 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('filenames', nargs='*')
     parser.add_argument('--include-version-classifiers', action='store_true')
-    parser.add_argument('--min-py3-version', type=_ver_type, default=(3, 7))
+    parser.add_argument(
+        '--min-py3-version', type=_ver_type, default=None,
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument('--min-py-version', type=_ver_type, default=(3, 7))
     parser.add_argument('--max-py-version', type=_ver_type, default=(3, 11))
     args = parser.parse_args(argv)
+
+    if args.min_py3_version:
+        print(
+            'WARNING: setup-cfg-fmt will replace --min-py3-version '
+            'with --min-py-version in a future release',
+        )
+        min_py_version = args.min_py3_version
+    else:
+        min_py_version = args.min_py_version
 
     retv = 0
     for filename in args.filenames:
         if format_file(
                 filename,
                 include_version_classifiers=args.include_version_classifiers,
-                min_py3_version=args.min_py3_version,
+                min_py_version=min_py_version,
                 max_py_version=args.max_py_version,
         ):
             print(f'Rewriting {filename}')
