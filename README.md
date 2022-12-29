@@ -1,5 +1,4 @@
-[![Build Status](https://dev.azure.com/asottile/asottile/_apis/build/status/asottile.setup-cfg-fmt?branchName=main)](https://dev.azure.com/asottile/asottile/_build/latest?definitionId=51&branchName=main)
-[![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/asottile/asottile/51/main.svg)](https://dev.azure.com/asottile/asottile/_build/latest?definitionId=51&branchName=main)
+[![build status](https://github.com/asottile/setup-cfg-fmt/actions/workflows/main.yml/badge.svg)](https://github.com/asottile/setup-cfg-fmt/actions/workflows/main.yml)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/asottile/setup-cfg-fmt/main.svg)](https://results.pre-commit.ci/latest/github/asottile/setup-cfg-fmt/main)
 
 setup-cfg-fmt
