@@ -7,6 +7,7 @@ import io
 import os.path
 import re
 import string
+import sys
 from typing import Generator
 from typing import Match
 from typing import Sequence
@@ -521,6 +522,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(
             'WARNING: setup-cfg-fmt will replace --min-py3-version '
             'with --min-py-version in a future release',
+            file=sys.stderr,
         )
         min_py_version = args.min_py3_version
     else:
