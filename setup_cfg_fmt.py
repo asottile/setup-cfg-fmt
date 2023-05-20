@@ -141,7 +141,7 @@ def _v(x: Version) -> str:
 
 def _parse_python_requires(
         python_requires: str | None,
-) -> tuple[Version | None, set[Version]]:
+) -> tuple[Version, set[Version]]:
     minimum = None
     excluded = set()
 
@@ -155,7 +155,7 @@ def _parse_python_requires(
             else:
                 raise UnknownVersionError()
 
-    return minimum, excluded
+    return minimum or (3, 7), excluded
 
 
 def _tox_envlist(setup_cfg: str) -> Generator[str, None, None]:
@@ -175,8 +175,8 @@ TOX_ENV = re.compile(r'py3(\d+)')
 
 
 def _python_requires(
-        setup_cfg: str, *, min_py_version: tuple[int, int],
-) -> str | None:
+        setup_cfg: str, *, min_py_version: tuple[int, int] | None,
+) -> str:
     cfg = NoTransformConfigParser()
     cfg.read(setup_cfg)
     current_value = cfg.get('options', 'python_requires', fallback='')
@@ -187,11 +187,14 @@ def _python_requires(
     except UnknownVersionError:  # assume they know what's up with weird things
         return current_value
 
+    if min_py_version is not None:
+        return _format_python_requires(min_py_version, excluded)
+
     for env in _tox_envlist(setup_cfg):
         match = TOX_ENV.match(env)
         if match:
             version = _to_ver(f'3.{match[1]}')
-            if minimum is None or version < minimum[:2]:
+            if version < minimum[:2]:
                 minimum = version
 
     for classifier in classifiers.strip().splitlines():
@@ -200,15 +203,10 @@ def _python_requires(
             if '.' not in version_part:
                 continue
             version = _to_ver(version_part)
-            if minimum is None or version < minimum[:2]:
+            if version < minimum[:2]:
                 minimum = version
 
-    if minimum is None:
-        return None
-    elif min_py_version > minimum:
-        return _format_python_requires(min_py_version, excluded)
-    else:
-        return _format_python_requires(minimum, excluded)
+    return _format_python_requires(minimum, excluded)
 
 
 def _requires(
@@ -274,11 +272,8 @@ def _py_classifiers(
     except UnknownVersionError:
         return None
 
-    if minimum is None:  # don't have a sequence of versions to iterate over
-        return None
-    else:
-        # classifiers only use the first two segments of version
-        minimum = minimum[:2]
+    # classifiers only use the first two segments of version
+    minimum = minimum[:2]
 
     versions: set[Version] = set()
     while minimum <= max_py_version:
@@ -310,8 +305,6 @@ def _trim_py_classifiers(
     def _is_ok_classifier(s: str) -> bool:
         parts = s.split(' :: ')
         if (
-                # can't know if it applies without a minimum
-                minimum is None or
                 # handle Python :: 3 :: Only
                 len(parts) != 3 or
                 not s.startswith('Programming Language :: Python :: ')
@@ -357,7 +350,7 @@ def _natural_sort(items: Sequence[str]) -> list[str]:
 def format_file(
         filename: str, *,
         include_version_classifiers: bool,
-        min_py_version: tuple[int, int],
+        min_py_version: tuple[int, int] | None,
         max_py_version: tuple[int, int],
 ) -> bool:
     with open(filename) as f:
@@ -405,10 +398,9 @@ def format_file(
             )
 
     requires = _python_requires(filename, min_py_version=min_py_version)
-    if requires is not None:
-        if not cfg.has_section('options'):
-            cfg.add_section('options')
-        cfg['options']['python_requires'] = requires
+    if not cfg.has_section('options'):
+        cfg.add_section('options')
+    cfg['options']['python_requires'] = requires
 
     install_requires = _requires(cfg, 'install_requires')
     if install_requires:
@@ -514,7 +506,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         '--min-py3-version', type=_ver_type, default=None,
         help=argparse.SUPPRESS,
     )
-    parser.add_argument('--min-py-version', type=_ver_type, default=(3, 7))
+    parser.add_argument('--min-py-version', type=_ver_type, default=None)
     parser.add_argument('--max-py-version', type=_ver_type, default=(3, 11))
     args = parser.parse_args(argv)
 

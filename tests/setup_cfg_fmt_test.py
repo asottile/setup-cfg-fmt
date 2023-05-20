@@ -10,6 +10,7 @@ from setup_cfg_fmt import _natural_sort
 from setup_cfg_fmt import _normalize_lib
 from setup_cfg_fmt import _ver_type
 from setup_cfg_fmt import main
+from setup_cfg_fmt import NoTransformConfigParser
 
 
 def test_ver_type_ok():
@@ -45,29 +46,29 @@ def test_case_insensitive_glob(s, expected):
 
 def test_noop(tmpdir):
     setup_cfg = tmpdir.join('setup.cfg')
-    setup_cfg.write(
+    s = (
         '[metadata]\n'
         'name = pkg\n'
         'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
         '\n'
-        '[bdist_wheel]\n'
-        'universal = true\n',
-    )
-
-    assert not main((str(setup_cfg),))
-
-    assert setup_cfg.read() == (
-        '[metadata]\n'
-        'name = pkg\n'
-        'version = 1.0\n'
+        '[options]\n'
+        'python_requires = >=3.7\n'
         '\n'
         '[bdist_wheel]\n'
         'universal = true\n'
     )
+    setup_cfg.write(s)
+
+    assert not main((str(setup_cfg),))
+
+    assert setup_cfg.read() == s
 
 
 @pytest.mark.parametrize(
-    ('input_tpl', 'expected_tpl'),
+    ('input_tpl', 'expected'),
     (
         pytest.param(
             '[metadata]\n'
@@ -94,30 +95,25 @@ def test_noop(tmpdir):
             '    req15 @ git+https://github.com/foo/bar.git@main\n'
             '    req16@git+https://github.com/biz/womp.git@tag\n',
 
-            '[metadata]\n'
-            'name = pkg\n'
-            'version = 1.0\n'
             '\n'
-            '[options]\n'
-            '{} =\n'
-            '    req>=2\n'
-            '    req-req\n'
-            '    req01\n'
-            '    req02\n'
-            '    req03\n'
-            '    req04>=1\n'
-            '    req05!=1,<=2\n'
-            '    req08==2\n'
-            '    req09~=7\n'
-            '    req10===8\n'
-            '    req12\n'
-            '    req13!=2,>=7\n'
-            '    req14>=1,<=2\n'
-            '    req15@git+https://github.com/foo/bar.git@main\n'
-            '    req16@git+https://github.com/biz/womp.git@tag\n'
-            '    req06;python_version==3.7\n'
-            '    req07;os_version!=windows\n'
-            '    req11;python_version=="3.7"\n',
+            'req>=2\n'
+            'req-req\n'
+            'req01\n'
+            'req02\n'
+            'req03\n'
+            'req04>=1\n'
+            'req05!=1,<=2\n'
+            'req08==2\n'
+            'req09~=7\n'
+            'req10===8\n'
+            'req12\n'
+            'req13!=2,>=7\n'
+            'req14>=1,<=2\n'
+            'req15@git+https://github.com/foo/bar.git@main\n'
+            'req16@git+https://github.com/biz/womp.git@tag\n'
+            'req06;python_version==3.7\n'
+            'req07;os_version!=windows\n'
+            'req11;python_version=="3.7"',
 
             id='normalizes requires',
         ),
@@ -127,13 +123,17 @@ def test_noop(tmpdir):
     'which',
     ('install_requires', 'setup_requires'),
 )
-def test_rewrite_requires(which, input_tpl, expected_tpl, tmpdir):
+def test_rewrite_requires(which, input_tpl, expected, tmpdir):
     setup_cfg = tmpdir.join('setup.cfg')
     setup_cfg.write(input_tpl.format(which))
 
     assert main((str(setup_cfg),))
 
-    assert setup_cfg.read() == expected_tpl.format(which)
+    cfg = NoTransformConfigParser()
+    cfg.read(setup_cfg)
+    requires = cfg.get('options', which)
+
+    assert requires == expected
 
 
 @pytest.mark.parametrize(
@@ -150,6 +150,12 @@ def test_rewrite_requires(which, input_tpl, expected_tpl, tmpdir):
             '[metadata]\n'
             'name = pkg\n'
             'version = 1.0\n'
+            'classifiers =\n'
+            '    Programming Language :: Python :: 3\n'
+            '    Programming Language :: Python :: 3 :: Only\n'
+            '\n'
+            '[options]\n'
+            'python_requires = >=3.7\n'
             '\n'
             '[bdist_wheel]\n'
             'universal = true\n',
@@ -170,6 +176,12 @@ def test_rewrite_requires(which, input_tpl, expected_tpl, tmpdir):
             '[metadata]\n'
             'name = pkg\n'
             'version = 1.0\n'
+            'classifiers =\n'
+            '    Programming Language :: Python :: 3\n'
+            '    Programming Language :: Python :: 3 :: Only\n'
+            '\n'
+            '[options]\n'
+            'python_requires = >=3.7\n'
             '\n'
             '[options.packages.find]\n'
             'where = src\n'
@@ -186,7 +198,13 @@ def test_rewrite_requires(which, input_tpl, expected_tpl, tmpdir):
 
             '[metadata]\n'
             'name = pkg_name\n'
-            'version = 1.0\n',
+            'version = 1.0\n'
+            'classifiers =\n'
+            '    Programming Language :: Python :: 3\n'
+            '    Programming Language :: Python :: 3 :: Only\n'
+            '\n'
+            '[options]\n'
+            'python_requires = >=3.7\n',
 
             id='normalizes names dashes -> underscores',
         ),
@@ -197,15 +215,18 @@ def test_rewrite_requires(which, input_tpl, expected_tpl, tmpdir):
             'classifiers =\n'
             '    Programming Language :: Python :: 3\n'
             '    License :: OSI Approved :: MIT License\n'
-            '    Programming Language :: Python :: 2\n',
+            '    Programming Language :: Python :: 3 :: Only\n',
 
             '[metadata]\n'
             'name = pkg\n'
             'version = 1.0\n'
             'classifiers =\n'
             '    License :: OSI Approved :: MIT License\n'
-            '    Programming Language :: Python :: 2\n'
-            '    Programming Language :: Python :: 3\n',
+            '    Programming Language :: Python :: 3\n'
+            '    Programming Language :: Python :: 3 :: Only\n'
+            '\n'
+            '[options]\n'
+            'python_requires = >=3.7\n',
 
             id='sorts classifiers',
         ),
@@ -224,7 +245,13 @@ def test_rewrite_requires(which, input_tpl, expected_tpl, tmpdir):
             'author_email = john@example.com\n'
             'maintainer = jane\n'
             'maintainer_email = jane@example.com\n'
-            'license = foo\n',
+            'license = foo\n'
+            'classifiers =\n'
+            '    Programming Language :: Python :: 3\n'
+            '    Programming Language :: Python :: 3 :: Only\n'
+            '\n'
+            '[options]\n'
+            'python_requires = >=3.7\n',
 
             id='orders authors and maintainers',
         ),
@@ -237,7 +264,13 @@ def test_rewrite_requires(which, input_tpl, expected_tpl, tmpdir):
             '[metadata]\n'
             'name = pkg\n'
             'author_email = john@example.com\n'
-            'maintainer_email = jane@example.com\n',
+            'maintainer_email = jane@example.com\n'
+            'classifiers =\n'
+            '    Programming Language :: Python :: 3\n'
+            '    Programming Language :: Python :: 3 :: Only\n'
+            '\n'
+            '[options]\n'
+            'python_requires = >=3.7\n',
 
             id='normalize dashes to underscores in keys',
         ),
@@ -294,6 +327,12 @@ def test_adds_long_description_with_readme(filename, content_type, tmpdir):
         f'version = 1.0\n'
         f'long_description = file: {filename}\n'
         f'long_description_content_type = {content_type}\n'
+        f'classifiers =\n'
+        f'    Programming Language :: Python :: 3\n'
+        f'    Programming Language :: Python :: 3 :: Only\n'
+        f'\n'
+        f'[options]\n'
+        f'python_requires = >=3.7\n'
     )
 
 
@@ -328,6 +367,12 @@ def test_readme_discover_does_not_prefer_adoc(filename, content_type, tmpdir):
         f'version = 1.0\n'
         f'long_description = file: {filename}\n'
         f'long_description_content_type = {content_type}\n'
+        f'classifiers =\n'
+        f'    Programming Language :: Python :: 3\n'
+        f'    Programming Language :: Python :: 3 :: Only\n'
+        f'\n'
+        f'[options]\n'
+        f'python_requires = >=3.7\n'
     )
 
 
@@ -356,6 +401,12 @@ def test_readme_discover_uses_asciidoc_if_none_other_found(filename, tmpdir):
         f'version = 1.0\n'
         f'long_description = file: {filename}\n'
         f'long_description_content_type = text/plain\n'
+        f'classifiers =\n'
+        f'    Programming Language :: Python :: 3\n'
+        f'    Programming Language :: Python :: 3 :: Only\n'
+        f'\n'
+        f'[options]\n'
+        f'python_requires = >=3.7\n'
     )
 
 
@@ -365,15 +416,29 @@ def test_readme_discover_prefers_file_over_directory(tmpdir):
     setup_cfg = tmpdir.join('setup.cfg')
     setup_cfg.write(
         '[metadata]\n'
-        'name = pkg\n',
+        'name = pkg\n'
+        'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.7\n',
     )
     assert main((str(setup_cfg),))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
         'name = pkg\n'
+        'version = 1.0\n'
         'long_description = file: README.md\n'
         'long_description_content_type = text/markdown\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.7\n'
     )
 
 
@@ -386,7 +451,13 @@ def test_sets_license_file_if_license_exists(filename, tmpdir):
     setup_cfg.write(
         '[metadata]\n'
         'name = pkg\n'
-        'version = 1.0\n',
+        'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.7\n',
     )
 
     assert main((str(setup_cfg),))
@@ -396,6 +467,12 @@ def test_sets_license_file_if_license_exists(filename, tmpdir):
         f'name = pkg\n'
         f'version = 1.0\n'
         f'license_file = {filename}\n'
+        f'classifiers =\n'
+        f'    Programming Language :: Python :: 3\n'
+        f'    Programming Language :: Python :: 3 :: Only\n'
+        f'\n'
+        f'[options]\n'
+        f'python_requires = >=3.7\n'
     )
 
 
@@ -405,23 +482,22 @@ def test_license_does_not_match_directories(tmpdir):
 
 
 def test_license_does_not_set_when_licenses_matches(tmpdir):
+    s = '[metadata]\n' \
+        'name = pkg\n' \
+        'version = 1.0\n' \
+        'license_files = LICENSE\n' \
+        'classifiers =\n' \
+        '    Programming Language :: Python :: 3\n' \
+        '    Programming Language :: Python :: 3 :: Only\n' \
+        '\n' \
+        '[options]\n' \
+        'python_requires = >=3.7\n'
+
     tmpdir.join('LICENSE').write('COPYRIGHT (C) 2019 ME')
     setup_cfg = tmpdir.join('setup.cfg')
-    setup_cfg.write(
-        '[metadata]\n'
-        'name = pkg\n'
-        'version = 1.0\n'
-        'license_files = LICENSE\n',
-    )
+    setup_cfg.write(s)
 
     assert not main((str(setup_cfg),))
-
-    assert setup_cfg.read() == (
-        '[metadata]\n'
-        'name = pkg\n'
-        'version = 1.0\n'
-        'license_files = LICENSE\n'
-    )
 
 
 def test_license_does_set_when_licenses_mismatches(tmpdir):
@@ -442,6 +518,12 @@ def test_license_does_set_when_licenses_mismatches(tmpdir):
         'version = 1.0\n'
         'license_file = LICENSE\n'
         'license_files = LICENSES\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.7\n'
     )
 
 
@@ -467,6 +549,11 @@ def test_rewrite_sets_license_type_and_classifier(tmpdir):
         'license_file = LICENSE\n'
         'classifiers =\n'
         '    License :: OSI Approved :: MIT License\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.7\n'
     )
 
 
@@ -510,6 +597,11 @@ freely, subject to the following restrictions:
         'license_file = LICENSE\n'
         'classifiers =\n'
         '    License :: OSI Approved :: zlib/libpng License\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.7\n'
     )
 
 
@@ -535,7 +627,7 @@ def test_python_requires_left_alone(tmpdir, s):
     assert not main((
         str(setup_cfg),
         '--include-version-classifiers',
-        '--min-py3-version=3.2',
+        '--min-py-version=3.2',
     ))
 
     assert setup_cfg.read() == (
@@ -558,14 +650,19 @@ def test_python_requires_left_alone(tmpdir, s):
             'py_modules = pkg\n',
             '\n'
             '[options]\n'
-            'py_modules = pkg\n',
+            'py_modules = pkg\n'
+            'python_requires = >=3.7\n',
             id='only empty options removed',
         ),
         pytest.param(
             '\n'
             '[options]\n'
-            'dependency_links = \n',
-            '',
+            'python_requires = >=3.7\n'
+            '\n'
+            '[empty]\n',
+            '\n'
+            '[options]\n'
+            'python_requires = >=3.7\n',
             id='entire section removed if all empty options are removed',
         ),
     ),
@@ -576,6 +673,9 @@ def test_strips_empty_options_and_sections(tmpdir, section, expected):
         '[metadata]\n'
         'name = pkg\n'
         'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
         f'{section}',
     )
 
@@ -584,6 +684,9 @@ def test_strips_empty_options_and_sections(tmpdir, section, expected):
         '[metadata]\n'
         'name = pkg\n'
         'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
         f'{expected}'
     )
 
@@ -600,7 +703,6 @@ def test_guess_python_requires_python2_tox_ini(tmpdir):
     assert main((
         str(setup_cfg),
         '--include-version-classifiers',
-        '--min-py-version=3.4',
         '--max-py-version=3.7',
     ))
 
@@ -633,7 +735,6 @@ def test_guess_python_requires_tox_ini_dashed_name(tmpdir):
     assert main((
         str(setup_cfg),
         '--include-version-classifiers',
-        '--min-py-version=3.4',
         '--max-py-version=3.7',
     ))
 
@@ -664,7 +765,6 @@ def test_guess_python_requires_tox_ini_py310(tmpdir):
     assert main((
         str(setup_cfg),
         '--include-version-classifiers',
-        '--min-py3-version=3.4',
     ))
 
     assert setup_cfg.read() == (
@@ -674,12 +774,15 @@ def test_guess_python_requires_tox_ini_py310(tmpdir):
         'classifiers =\n'
         '    Programming Language :: Python :: 3\n'
         '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.7\n'
+        '    Programming Language :: Python :: 3.8\n'
+        '    Programming Language :: Python :: 3.9\n'
         '    Programming Language :: Python :: 3.10\n'
         '    Programming Language :: Python :: 3.11\n'
         '    Programming Language :: Python :: Implementation :: CPython\n'
         '\n'
         '[options]\n'
-        'python_requires = >=3.10\n'
+        'python_requires = >=3.7\n'
     )
 
 
@@ -694,16 +797,19 @@ def test_guess_python_requires_ignores_insufficient_version_envs(tmpdir):
         '    Programming Language :: Python :: Implementation :: CPython\n',
     )
 
-    assert not main((
-        str(setup_cfg), '--min-py-version=3.4', '--max-py-version=3.7',
-    ))
+    assert main((str(setup_cfg), '--max-py-version=3.7'))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
         'name = pkg\n'
         'version = 1.0\n'
         'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
         '    Programming Language :: Python :: Implementation :: CPython\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.7\n'
     )
 
 
@@ -721,7 +827,6 @@ def test_guess_python_requires_from_classifiers(tmpdir):
     assert main((
         str(setup_cfg),
         '--include-version-classifiers',
-        '--min-py-version=3.4',
         '--max-py-version=3.7',
     ))
 
@@ -841,7 +946,6 @@ def test_python_requires_with_patch_version(tmpdir):
     assert main((
         str(setup_cfg),
         '--include-version-classifiers',
-        '--min-py-version=3.4',
         '--max-py-version=3.8',
     ))
 
@@ -927,12 +1031,14 @@ def test_min_py3_version_less_than_minimum(tmpdir):
         'classifiers =\n'
         '    Programming Language :: Python :: 3\n'
         '    Programming Language :: Python :: 3 :: Only\n'
+        '    Programming Language :: Python :: 3.4\n'
+        '    Programming Language :: Python :: 3.5\n'
         '    Programming Language :: Python :: 3.6\n'
         '    Programming Language :: Python :: 3.7\n'
         '    Programming Language :: Python :: Implementation :: CPython\n'
         '\n'
         '[options]\n'
-        'python_requires = >=3.6\n'
+        'python_requires = >=3.4\n'
     )
 
 
@@ -940,6 +1046,12 @@ def test_rewrite_extras(tmpdir):
     setup_cfg_content = (
         '[metadata]\n'
         'name = test\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.7\n'
         '[options.extras_require]\n'
         'dev =\n'
         '    pytest\n'
@@ -957,6 +1069,12 @@ def test_rewrite_extras(tmpdir):
     assert setup_cfg.read() == (
         '[metadata]\n'
         'name = test\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.7\n'
         '\n'
         '[options.extras_require]\n'
         'ci =\n'
@@ -1115,6 +1233,36 @@ def test_version_classifiers_removed_by_default(tmpdir):
     )
 
 
+def test_deprecated_min_py3_version(tmpdir, capsys):
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = test\n'
+        'version = 1.0\n',
+    )
+
+    assert main((str(setup_cfg), '--min-py3-version=3.7'))
+
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = test\n'
+        'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.7\n'
+    )
+
+    out, err = capsys.readouterr()
+    assert out == f'Rewriting {setup_cfg}\n'
+    assert err == (
+        'WARNING: setup-cfg-fmt will replace --min-py3-version with '
+        '--min-py-version in a future release\n'
+    )
+
+
 def test_leaves_casing_of_unrelated_settings(tmpdir):
     setup_cfg = tmpdir.join('setup.cfg')
     setup_cfg.write(
@@ -1122,7 +1270,12 @@ def test_leaves_casing_of_unrelated_settings(tmpdir):
         'name = pkg\n'
         'version = 1.0\n'
         'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
         '    Programming Language :: Python :: Implementation :: CPython\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.7\n'
         '\n'
         '[tool:pytest]\n'
         'DJANGO_SETTINGS_MODULE = test.test\n',
