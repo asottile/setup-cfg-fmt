@@ -395,7 +395,7 @@ def test_sets_license_file_if_license_exists(filename, tmpdir):
         f'[metadata]\n'
         f'name = pkg\n'
         f'version = 1.0\n'
-        f'license_file = {filename}\n'
+        f'license_files = {filename}\n'
     )
 
 
@@ -440,8 +440,9 @@ def test_license_does_set_when_licenses_mismatches(tmpdir):
         '[metadata]\n'
         'name = pkg\n'
         'version = 1.0\n'
-        'license_file = LICENSE\n'
-        'license_files = LICENSES\n'
+        'license_files =\n'
+        '    LICENSE\n'
+        '    LICENSES\n'
     )
 
 
@@ -464,7 +465,7 @@ def test_rewrite_sets_license_type_and_classifier(tmpdir):
         'name = pkg\n'
         'version = 1.0\n'
         'license = MIT\n'
-        'license_file = LICENSE\n'
+        'license_files = LICENSE\n'
         'classifiers =\n'
         '    License :: OSI Approved :: MIT License\n'
     )
@@ -507,9 +508,29 @@ freely, subject to the following restrictions:
         'name = pkg\n'
         'version = 1.0\n'
         'license = Zlib\n'
-        'license_file = LICENSE\n'
+        'license_files = LICENSE\n'
         'classifiers =\n'
         '    License :: OSI Approved :: zlib/libpng License\n'
+    )
+
+
+def test_combines_license_file_and_license_files(tmp_path):
+    setup_cfg = tmp_path.joinpath('setup.cfg')
+    setup_cfg.write_text(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'license_file = LICENSE\n'
+        'license_files = LICENSE\n',
+    )
+
+    assert main((str(setup_cfg),))
+
+    assert setup_cfg.read_text() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'license_files = LICENSE\n'
     )
 
 
