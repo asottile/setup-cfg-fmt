@@ -235,12 +235,10 @@ def _requires(
     if not require_group:
         return []
 
-    normalized = sorted(
+    return sorted(
         (_normalize_req(req) for req in require_group),
         key=lambda req: (';' in req, _req_base(req), req),
     )
-    normalized.insert(0, '')
-    return normalized
 
 
 def _normalize_req(req: str) -> str:
@@ -431,16 +429,17 @@ def format_file(
 
     install_requires = _requires(cfg, 'install_requires')
     if install_requires:
-        cfg['options']['install_requires'] = '\n'.join(install_requires)
+        cfg['options']['install_requires'] = _fmt_list_always(install_requires)
 
     setup_requires = _requires(cfg, 'setup_requires')
     if setup_requires:
-        cfg['options']['setup_requires'] = '\n'.join(setup_requires)
+        cfg['options']['setup_requires'] = _fmt_list_always(setup_requires)
 
     if cfg.has_section('options.extras_require'):
         for key in cfg['options.extras_require']:
-            group_requires = _requires(cfg, key, 'options.extras_require')
-            cfg['options.extras_require'][key] = '\n'.join(group_requires)
+            cfg['options.extras_require'][key] = _fmt_list_always(
+                _requires(cfg, key, 'options.extras_require'),
+            )
 
     py_classifiers = _py_classifiers(requires, max_py_version=max_py_version)
     classifiers.extend(py_classifiers)
