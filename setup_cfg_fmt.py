@@ -24,7 +24,7 @@ KEYS_ORDER: tuple[tuple[str, tuple[str, ...]], ...] = (
             'long_description', 'long_description_content_type',
             'url',
             'author', 'author_email', 'maintainer', 'maintainer_email',
-            'license', 'license_file', 'license_files',
+            'license', 'license_files',
             'platforms', 'classifiers',
         ),
     ),
@@ -117,6 +117,17 @@ def _first_file(setup_cfg: str, prefix: str) -> str | None:
         return None
 
 
+def _parse_list(s: str) -> list[str]:
+    return s.strip().splitlines()
+
+
+def _fmt_list(items: list[str]) -> str:
+    if len(items) == 1:
+        return items[0]
+    else:
+        return '\n'.join(['', *items])
+
+
 def _format_python_requires(minimum: Version, excluded: set[Version]) -> str:
     return ', '.join((
         f'>={_v(minimum)}', *(f'!={_v(v)}.*' for v in sorted(excluded)),
@@ -194,7 +205,7 @@ def _python_requires(
             if minimum is None or version < minimum[:2]:
                 minimum = version
 
-    for classifier in classifiers.strip().splitlines():
+    for classifier in _parse_list(classifiers):
         if classifier.startswith('Programming Language :: Python :: 3'):
             version_part = classifier.split()[-1]
             if '.' not in version_part:
@@ -216,7 +227,7 @@ def _requires(
 ) -> list[str]:
     raw = cfg.get(section, which, fallback='')
 
-    require_group = raw.strip().splitlines()
+    require_group = _parse_list(raw)
     if not require_group:
         return []
 
@@ -384,15 +395,16 @@ def format_file(
         else:
             cfg['metadata']['long_description_content_type'] = 'text/plain'
 
+    # combines license_file and license_files
+    licenses = _parse_list(cfg['metadata'].get('license_files', ''))
+    if 'license_file' in cfg['metadata']:
+        licenses.append(cfg['metadata'].pop('license_file'))
+
     # set license fields if a license exists
     license_filename = _first_file(filename, 'licen[sc]e')
     if license_filename is not None:
         license_basename = os.path.basename(license_filename)
-        known_license_files = (
-            cfg['metadata'].get('license_files', '').strip().splitlines()
-        )
-        if license_basename not in known_license_files:
-            cfg['metadata']['license_file'] = license_basename
+        licenses.append(license_basename)
 
         license_id = identify.license_id(license_filename)
         if license_id is not None:
@@ -403,6 +415,10 @@ def format_file(
                 cfg['metadata'].get('classifiers', '').rstrip() +
                 f'\n{LICENSE_TO_CLASSIFIER[license_id]}'
             )
+
+    # sort license_files if it exists
+    if licenses:
+        cfg['metadata']['license_files'] = _fmt_list(sorted(set(licenses)))
 
     requires = _python_requires(filename, min_py_version=min_py_version)
     if requires is not None:
