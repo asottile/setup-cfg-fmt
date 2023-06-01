@@ -211,6 +211,22 @@ def test_rewrite_requires(which, input_tpl, expected_tpl, tmpdir):
         ),
         pytest.param(
             '[metadata]\n'
+            'name = pkg\n'
+            'version = 1.0\n'
+            'classifiers = License :: OSI Approved :: MIT License\n'
+            '    Programming Language :: Python :: 3\n',
+
+            '[metadata]\n'
+            'name = pkg\n'
+            'version = 1.0\n'
+            'classifiers =\n'
+            '    License :: OSI Approved :: MIT License\n'
+            '    Programming Language :: Python :: 3\n',
+
+            id='normalizes classifier whitespace',
+        ),
+        pytest.param(
+            '[metadata]\n'
             'maintainer_email = jane@example.com\n'
             'maintainer = jane\n'
             'license = foo\n'

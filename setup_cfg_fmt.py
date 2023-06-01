@@ -121,11 +121,15 @@ def _parse_list(s: str) -> list[str]:
     return s.strip().splitlines()
 
 
+def _fmt_list_always(items: list[str]) -> str:
+    return '\n'.join(['', *items])
+
+
 def _fmt_list(items: list[str]) -> str:
     if len(items) == 1:
         return items[0]
     else:
-        return '\n'.join(['', *items])
+        return _fmt_list_always(items)
 
 
 def _format_python_requires(minimum: Version, excluded: set[Version]) -> str:
@@ -279,14 +283,14 @@ def _req_base(lib: str) -> str:
 
 def _py_classifiers(
         python_requires: str | None, *, max_py_version: tuple[int, int],
-) -> str | None:
+) -> list[str]:
     try:
         minimum, exclude = _parse_python_requires(python_requires)
     except UnknownVersionError:
-        return None
+        return []
 
     if minimum is None:  # don't have a sequence of versions to iterate over
-        return None
+        return []
     else:
         # classifiers only use the first two segments of version
         minimum = minimum[:2]
@@ -303,7 +307,7 @@ def _py_classifiers(
     ]
     classifiers.append('Programming Language :: Python :: 3 :: Only')
 
-    return '\n'.join(classifiers)
+    return classifiers
 
 
 def _trim_py_classifiers(
@@ -343,7 +347,7 @@ def _trim_py_classifiers(
     return [s for s in classifiers if _is_ok_classifier(s)]
 
 
-def _imp_classifiers(setup_cfg: str) -> str:
+def _imp_classifiers(setup_cfg: str) -> list[str]:
     classifiers = set()
 
     for env in _tox_envlist(setup_cfg):
@@ -352,7 +356,7 @@ def _imp_classifiers(setup_cfg: str) -> str:
         if classifier is not None:
             classifiers.add(classifier)
 
-    return '\n'.join(sorted(classifiers))
+    return sorted(classifiers)
 
 
 def _natural_sort(items: Sequence[str]) -> list[str]:
@@ -395,8 +399,10 @@ def format_file(
         else:
             cfg['metadata']['long_description_content_type'] = 'text/plain'
 
-    # combines license_file and license_files
+    classifiers = _parse_list(cfg['metadata'].get('classifiers', ''))
     licenses = _parse_list(cfg['metadata'].get('license_files', ''))
+
+    # combines license_file and license_files
     if 'license_file' in cfg['metadata']:
         licenses.append(cfg['metadata'].pop('license_file'))
 
@@ -411,10 +417,7 @@ def format_file(
             cfg['metadata']['license'] = license_id
 
         if license_id in LICENSE_TO_CLASSIFIER:
-            cfg['metadata']['classifiers'] = (
-                cfg['metadata'].get('classifiers', '').rstrip() +
-                f'\n{LICENSE_TO_CLASSIFIER[license_id]}'
-            )
+            classifiers.append(LICENSE_TO_CLASSIFIER[license_id])
 
     # sort license_files if it exists
     if licenses:
@@ -440,29 +443,18 @@ def format_file(
             cfg['options.extras_require'][key] = '\n'.join(group_requires)
 
     py_classifiers = _py_classifiers(requires, max_py_version=max_py_version)
-    if py_classifiers:
-        cfg['metadata']['classifiers'] = (
-            cfg['metadata'].get('classifiers', '').rstrip() +
-            f'\n{py_classifiers}'
-        )
-
-    imp_classifiers = _imp_classifiers(filename)
-    if imp_classifiers:
-        cfg['metadata']['classifiers'] = (
-            cfg['metadata'].get('classifiers', '').rstrip() +
-            f'\n{imp_classifiers}'
-        )
+    classifiers.extend(py_classifiers)
+    classifiers.extend(_imp_classifiers(filename))
 
     # sort the classifiers if present
-    if 'classifiers' in cfg['metadata']:
-        classifiers = _natural_sort(cfg['metadata']['classifiers'].split('\n'))
+    if classifiers:
         classifiers = _trim_py_classifiers(
-            classifiers,
+            _natural_sort(classifiers),
             requires,
             max_py_version=max_py_version,
             include_version_classifiers=include_version_classifiers,
         )
-        cfg['metadata']['classifiers'] = '\n'.join(classifiers)
+        cfg['metadata']['classifiers'] = _fmt_list_always(classifiers)
 
     sections: dict[str, dict[str, str]] = {}
     for section, key_order in KEYS_ORDER:
