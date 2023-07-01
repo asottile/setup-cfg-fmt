@@ -91,7 +91,7 @@ GLOB_PART = re.compile(r'(\[[^]]+\]|.)')
 
 def _case_insensitive_glob(s: str) -> str:
     def cb(match: Match[str]) -> str:
-        match_s = match.group()
+        match_s = match[0]
         if len(match_s) == 1:
             return f'[{match_s.upper()}{match_s.lower()}]'
         else:
@@ -122,7 +122,7 @@ def _parse_list(s: str) -> list[str]:
 
 
 def _fmt_list_always(items: list[str]) -> str:
-    return '\n'.join(['', *items])
+    return '\n'.join(('', *items))
 
 
 def _fmt_list(items: list[str]) -> str:
@@ -261,10 +261,7 @@ def _normalize_lib(lib: str) -> str:
 
     conditions = ','.join(
         sorted(
-            (
-                f'{m.group(1)}{m.group(2)}'
-                for m in REQ_REGEX.finditer(lib)
-            ),
+            (f'{m[1]}{m[2]}' for m in REQ_REGEX.finditer(lib)),
             key=lambda c: ('<' in c, '>' in 'c', c),
         ),
     )
@@ -276,7 +273,7 @@ def _req_base(lib: str) -> str:
     basem = re.match(BASE_NAME_REGEX, lib)
     assert basem
     # pip replaces _ with - in package names
-    return basem.group(0).replace('_', '-')
+    return basem[0].replace('_', '-')
 
 
 def _py_classifiers(
@@ -521,7 +518,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         '--min-py3-version', type=_ver_type, default=None,
         help=argparse.SUPPRESS,
     )
-    parser.add_argument('--min-py-version', type=_ver_type, default=(3, 7))
+    parser.add_argument('--min-py-version', type=_ver_type, default=(3, 8))
     parser.add_argument('--max-py-version', type=_ver_type, default=(3, 11))
     args = parser.parse_args(argv)
 
