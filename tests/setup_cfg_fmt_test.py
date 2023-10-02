@@ -702,6 +702,7 @@ def test_guess_python_requires_tox_ini_py310(tmpdir):
         str(setup_cfg),
         '--include-version-classifiers',
         '--min-py3-version=3.4',
+        '--max-py-version=3.11',
     ))
 
     assert setup_cfg.read() == (
