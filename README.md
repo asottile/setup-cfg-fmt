@@ -120,7 +120,7 @@ A few sources are searched for guessing `python_requires`:
 - the existing `python_requires` setting itself
 - `envlist` in `tox.ini` if present
 - python version `classifiers` that are already set
-- the `--min-py-version` argument
+- the `--min-py-version` argument (defaults to the oldest, not EOL version)
 
 ### adds python version classifiers
 
