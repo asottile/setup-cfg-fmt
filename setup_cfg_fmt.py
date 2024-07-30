@@ -173,7 +173,7 @@ def _parse_python_requires(
     return minimum, excluded
 
 
-def _tox_envlist(setup_cfg: str) -> Generator[str, None, None]:
+def _tox_envlist(setup_cfg: str) -> Generator[str]:
     tox_ini = _adjacent_filename(setup_cfg, 'tox.ini')
     if os.path.exists(tox_ini):
         cfg = NoTransformConfigParser()
