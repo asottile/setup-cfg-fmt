@@ -8,14 +8,13 @@ import os.path
 import re
 import string
 import sys
-from typing import Generator
-from typing import Match
-from typing import Sequence
-from typing import Tuple
+from collections.abc import Generator
+from collections.abc import Sequence
+from re import Match
 
 from identify import identify
 
-Version = Tuple[int, ...]
+Version = tuple[int, ...]
 
 KEYS_ORDER: tuple[tuple[str, tuple[str, ...]], ...] = (
     (
