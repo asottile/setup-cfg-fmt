@@ -127,7 +127,7 @@ A few sources are searched for guessing `python_requires`:
 classifiers are generated based on:
 
 - the `python_requires` setting
-- the `--max-py-version` argument (currently defaulting to `3.11`)
+- the `--max-py-version` argument
 - `--include-version-classifiers` is specified
 
 ```diff
@@ -140,6 +140,7 @@ classifiers are generated based on:
 +    Programming Language :: Python :: 3.9
 +    Programming Language :: Python :: 3.10
 +    Programming Language :: Python :: 3.11
++    ...
 ```
 
 without `--include-version-classifiers` only the major version will be included:
