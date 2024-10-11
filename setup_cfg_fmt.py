@@ -517,7 +517,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         '--min-py3-version', type=_ver_type, default=None,
         help=argparse.SUPPRESS,
     )
-    parser.add_argument('--min-py-version', type=_ver_type, default=(3, 8))
+    parser.add_argument('--min-py-version', type=_ver_type, default=(3, 9))
     parser.add_argument('--max-py-version', type=_ver_type, default=(3, 13))
     args = parser.parse_args(argv)
 
