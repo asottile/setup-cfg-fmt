@@ -196,14 +196,12 @@ def test_rewrite_requires(which, input_tpl, expected_tpl, tmpdir):
             'version = 1.0\n'
             'classifiers =\n'
             '    Programming Language :: Python :: 3\n'
-            '    License :: OSI Approved :: MIT License\n'
             '    Programming Language :: Python :: 2\n',
 
             '[metadata]\n'
             'name = pkg\n'
             'version = 1.0\n'
             'classifiers =\n'
-            '    License :: OSI Approved :: MIT License\n'
             '    Programming Language :: Python :: 2\n'
             '    Programming Language :: Python :: 3\n',
 
@@ -213,14 +211,14 @@ def test_rewrite_requires(which, input_tpl, expected_tpl, tmpdir):
             '[metadata]\n'
             'name = pkg\n'
             'version = 1.0\n'
-            'classifiers = License :: OSI Approved :: MIT License\n'
+            'classifiers = Programming Language :: Python :: 2\n'
             '    Programming Language :: Python :: 3\n',
 
             '[metadata]\n'
             'name = pkg\n'
             'version = 1.0\n'
             'classifiers =\n'
-            '    License :: OSI Approved :: MIT License\n'
+            '    Programming Language :: Python :: 2\n'
             '    Programming Language :: Python :: 3\n',
 
             id='normalizes classifier whitespace',
@@ -482,8 +480,6 @@ def test_rewrite_sets_license_type_and_classifier(tmpdir):
         'version = 1.0\n'
         'license = MIT\n'
         'license_files = LICENSE\n'
-        'classifiers =\n'
-        '    License :: OSI Approved :: MIT License\n'
     )
 
 
@@ -525,8 +521,6 @@ freely, subject to the following restrictions:
         'version = 1.0\n'
         'license = Zlib\n'
         'license_files = LICENSE\n'
-        'classifiers =\n'
-        '    License :: OSI Approved :: zlib/libpng License\n'
     )
 
 
@@ -1013,7 +1007,6 @@ def test_imp_classifiers_from_tox_ini(tmpdir):
         '[metadata]\n'
         'name = test\n'
         'classifiers =\n'
-        '    License :: OSI Approved :: MIT License\n'
         '    Programming Language :: Python :: 3\n'
         '    Programming Language :: Python :: 3 :: Only\n'
         '    Programming Language :: Python :: 3.9\n',
@@ -1030,7 +1023,6 @@ def test_imp_classifiers_from_tox_ini(tmpdir):
         '[metadata]\n'
         'name = test\n'
         'classifiers =\n'
-        '    License :: OSI Approved :: MIT License\n'
         '    Programming Language :: Python :: 3\n'
         '    Programming Language :: Python :: 3 :: Only\n'
         '    Programming Language :: Python :: 3.9\n'
@@ -1049,7 +1041,6 @@ def test_imp_classifiers_no_change(tmpdir):
         '[metadata]\n'
         'name = test\n'
         'classifiers =\n'
-        '    License :: OSI Approved :: MIT License\n'
         '    Programming Language :: Python :: 3\n'
         '    Programming Language :: Python :: 3 :: Only\n'
         '    Programming Language :: Python :: 3.9\n'
@@ -1071,7 +1062,6 @@ def test_imp_classifiers_no_change(tmpdir):
         '[metadata]\n'
         'name = test\n'
         'classifiers =\n'
-        '    License :: OSI Approved :: MIT License\n'
         '    Programming Language :: Python :: 3\n'
         '    Programming Language :: Python :: 3 :: Only\n'
         '    Programming Language :: Python :: 3.9\n'
@@ -1090,7 +1080,6 @@ def test_imp_classifiers_pypy_only(tmpdir):
         '[metadata]\n'
         'name = test\n'
         'classifiers =\n'
-        '    License :: OSI Approved :: MIT License\n'
         '    Programming Language :: Python :: 3\n'
         '    Programming Language :: Python :: 3 :: Only\n'
         '    Programming Language :: Python :: 3.9\n'
@@ -1110,7 +1099,6 @@ def test_imp_classifiers_pypy_only(tmpdir):
         '[metadata]\n'
         'name = test\n'
         'classifiers =\n'
-        '    License :: OSI Approved :: MIT License\n'
         '    Programming Language :: Python :: 3\n'
         '    Programming Language :: Python :: 3 :: Only\n'
         '    Programming Language :: Python :: 3.9\n'
@@ -1127,7 +1115,6 @@ def test_version_classifiers_removed_by_default(tmpdir):
         '[metadata]\n'
         'name = test\n'
         'classifiers =\n'
-        '    License :: OSI Approved :: MIT License\n'
         '    Programming Language :: Python :: 3\n'
         '    Programming Language :: Python :: 3 :: Only\n'
         '    Programming Language :: Python :: 3.7\n'
@@ -1144,7 +1131,6 @@ def test_version_classifiers_removed_by_default(tmpdir):
         '[metadata]\n'
         'name = test\n'
         'classifiers =\n'
-        '    License :: OSI Approved :: MIT License\n'
         '    Programming Language :: Python :: 3\n'
         '    Programming Language :: Python :: 3 :: Only\n'
         '\n'
