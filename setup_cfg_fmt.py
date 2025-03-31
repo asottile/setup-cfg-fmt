@@ -39,36 +39,6 @@ KEYS_ORDER: tuple[tuple[str, tuple[str, ...]], ...] = (
     ('options.exclude_package_data', ()),
 )
 
-
-LICENSE_TO_CLASSIFIER = {
-    '0BSD': 'License :: OSI Approved :: BSD License',
-    'AFL-3.0': 'License :: OSI Approved :: Academic Free License (AFL)',
-    'AGPL-3.0': 'License :: OSI Approved :: GNU Affero General Public License v3',  # noqa: E501
-    'Apache-2.0': 'License :: OSI Approved :: Apache Software License',
-    'Artistic-2.0': 'License :: OSI Approved :: Artistic License',
-    'BSD-2-Clause': 'License :: OSI Approved :: BSD License',
-    'BSD-3-Clause': 'License :: OSI Approved :: BSD License',
-    'BSD-3-Clause-Clear': 'License :: OSI Approved :: BSD License',
-    'BSL-1.0': 'License :: OSI Approved :: Boost Software License 1.0 (BSL-1.0)',  # noqa: E501
-    'CC0-1.0': 'License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication',  # noqa: E501
-    'EPL-1.0': 'License :: OSI Approved :: Eclipse Public License 1.0 (EPL-1.0)',  # noqa: E501
-    'EPL-2.0': 'License :: OSI Approved :: Eclipse Public License 2.0 (EPL-2.0)',  # noqa: E501
-    'EUPL-1.1': 'License :: OSI Approved :: European Union Public Licence 1.1 (EUPL 1.1)',  # noqa: E501
-    'EUPL-1.2': 'License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)',  # noqa: E501
-    'GPL-2.0': 'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',  # noqa: E501
-    'GPL-3.0': 'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',  # noqa: E501
-    'ISC': 'License :: OSI Approved :: ISC License (ISCL)',
-    'LGPL-2.1': 'License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)',  # noqa: E501
-    'LGPL-3.0': 'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',  # noqa: E501
-    'MIT': 'License :: OSI Approved :: MIT License',
-    'MPL-2.0': 'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',  # noqa: E501
-    'NCSA': 'License :: OSI Approved :: University of Illinois/NCSA Open Source License',  # noqa: E501
-    'OFL-1.1': 'License :: OSI Approved :: SIL Open Font License 1.1 (OFL-1.1)',  # noqa: E501
-    'PostgreSQL': 'License :: OSI Approved :: PostgreSQL License',
-    'UPL-1.0': 'License :: OSI Approved :: Universal Permissive License (UPL)',
-    'Zlib': 'License :: OSI Approved :: zlib/libpng License',
-}
-
 TOX_TO_CLASSIFIERS = {
     'py': 'Programming Language :: Python :: Implementation :: CPython',
     'pypy': 'Programming Language :: Python :: Implementation :: PyPy',
@@ -410,9 +380,6 @@ def format_file(
         if license_id is not None:
             cfg['metadata']['license'] = license_id
 
-        if license_id in LICENSE_TO_CLASSIFIER:
-            classifiers.append(LICENSE_TO_CLASSIFIER[license_id])
-
     # sort license_files if it exists
     if licenses:
         cfg['metadata']['license_files'] = _fmt_list(sorted(set(licenses)))
@@ -449,6 +416,9 @@ def format_file(
             max_py_version=max_py_version,
             include_version_classifiers=include_version_classifiers,
         )
+        classifiers = [
+            s for s in classifiers if not s.startswith('License ::')
+        ]
         cfg['metadata']['classifiers'] = _fmt_list_always(classifiers)
 
     sections: dict[str, dict[str, str]] = {}

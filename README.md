@@ -101,7 +101,7 @@ This will show up on the pypi project page
 +long_description_content_type = text/markdown
 ```
 
-### adds `license_file` / `license` / license classifier if `LICENSE` exists
+### adds `license_file` / `license` if `LICENSE` exists
 
 ```diff
  [metadata]
@@ -109,8 +109,6 @@ This will show up on the pypi project page
  version = 1.14.5
 +license = MIT
 +license_file = LICENSE
-+classifiers =
-+    License :: OSI Approved :: MIT License
 ```
 
 ### set `python_requires`
@@ -160,10 +158,8 @@ without `--include-version-classifiers` only the major version will be included:
  version = 1.14.5
  classifiers =
 -    Programming Language :: Python :: 3
--    License :: OSI Approved :: MIT License
-+    License :: OSI Approved :: MIT License
 +    Programming Language :: Python :: 3
-     Programming Language :: Python :: 3.6
++    Programming Language :: Python :: 3.6
 ```
 
 ### removes empty options in any section
