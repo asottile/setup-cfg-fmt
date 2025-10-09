@@ -488,7 +488,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         help=argparse.SUPPRESS,
     )
     parser.add_argument('--min-py-version', type=_ver_type, default=(3, 9))
-    parser.add_argument('--max-py-version', type=_ver_type, default=(3, 13))
+    parser.add_argument('--max-py-version', type=_ver_type, default=(3, 14))
     args = parser.parse_args(argv)
 
     if args.min_py3_version:
