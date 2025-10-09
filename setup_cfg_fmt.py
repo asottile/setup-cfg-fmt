@@ -7,7 +7,6 @@ import io
 import os.path
 import re
 import string
-import sys
 from collections.abc import Generator
 from collections.abc import Sequence
 from re import Match
@@ -483,30 +482,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('filenames', nargs='*')
     parser.add_argument('--include-version-classifiers', action='store_true')
-    parser.add_argument(
-        '--min-py3-version', type=_ver_type, default=None,
-        help=argparse.SUPPRESS,
-    )
     parser.add_argument('--min-py-version', type=_ver_type, default=(3, 9))
     parser.add_argument('--max-py-version', type=_ver_type, default=(3, 14))
     args = parser.parse_args(argv)
-
-    if args.min_py3_version:
-        print(
-            'WARNING: setup-cfg-fmt will replace --min-py3-version '
-            'with --min-py-version in a future release',
-            file=sys.stderr,
-        )
-        min_py_version = args.min_py3_version
-    else:
-        min_py_version = args.min_py_version
 
     retv = 0
     for filename in args.filenames:
         if format_file(
                 filename,
                 include_version_classifiers=args.include_version_classifiers,
-                min_py_version=min_py_version,
+                min_py_version=args.min_py_version,
                 max_py_version=args.max_py_version,
         ):
             print(f'Rewriting {filename}')

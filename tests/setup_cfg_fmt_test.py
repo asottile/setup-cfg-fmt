@@ -566,7 +566,7 @@ def test_python_requires_left_alone(tmpdir, s):
     assert not main((
         str(setup_cfg),
         '--include-version-classifiers',
-        '--min-py3-version=3.2',
+        '--min-py-version=3.2',
     ))
 
     assert setup_cfg.read() == (
@@ -695,7 +695,7 @@ def test_guess_python_requires_tox_ini_py310(tmpdir):
     assert main((
         str(setup_cfg),
         '--include-version-classifiers',
-        '--min-py3-version=3.4',
+        '--min-py-version=3.4',
         '--max-py-version=3.11',
     ))
 
