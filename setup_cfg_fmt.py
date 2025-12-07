@@ -43,6 +43,8 @@ TOX_TO_CLASSIFIERS = {
     'pypy': 'Programming Language :: Python :: Implementation :: PyPy',
 }
 
+_MIN_PY_VERSION_DEFAULT: Version = (3, 10)
+
 
 class NoTransformConfigParser(configparser.RawConfigParser):
     def optionxform(self, s: str) -> str:
@@ -158,7 +160,7 @@ TOX_ENV = re.compile(r'py3(\d+)')
 
 
 def _python_requires(
-        setup_cfg: str, *, min_py_version: tuple[int, int],
+        setup_cfg: str, *, min_py_version: tuple[int, int] | None,
 ) -> str | None:
     cfg = NoTransformConfigParser()
     cfg.read(setup_cfg)
@@ -186,12 +188,13 @@ def _python_requires(
             if minimum is None or version < minimum[:2]:
                 minimum = version
 
-    if minimum is None:
+    if minimum is None and min_py_version is None:
         return None
-    elif min_py_version > minimum:
-        return _format_python_requires(min_py_version, excluded)
-    else:
-        return _format_python_requires(minimum, excluded)
+
+    default_min = min_py_version or _MIN_PY_VERSION_DEFAULT
+    final_min = max(minimum or default_min, default_min)
+
+    return _format_python_requires(final_min, excluded)
 
 
 def _requires(
@@ -335,7 +338,7 @@ def _natural_sort(items: Sequence[str]) -> list[str]:
 def format_file(
         filename: str, *,
         include_version_classifiers: bool,
-        min_py_version: tuple[int, int],
+        min_py_version: tuple[int, int] | None,
         max_py_version: tuple[int, int],
 ) -> bool:
     with open(filename) as f:
@@ -482,7 +485,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('filenames', nargs='*')
     parser.add_argument('--include-version-classifiers', action='store_true')
-    parser.add_argument('--min-py-version', type=_ver_type, default=(3, 10))
+    parser.add_argument('--min-py-version', type=_ver_type)
     parser.add_argument('--max-py-version', type=_ver_type, default=(3, 14))
     args = parser.parse_args(argv)
 
