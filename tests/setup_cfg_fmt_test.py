@@ -619,6 +619,28 @@ def test_strips_empty_options_and_sections(tmpdir, section, expected):
     )
 
 
+def test_set_python_requires_when_min_is_specified(tmpdir):
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n',
+    )
+
+    assert main((str(setup_cfg), '--min-py-version=3.14'))
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.14\n'
+    )
+
+
 def test_guess_python_requires_python2_tox_ini(tmpdir):
     tmpdir.join('tox.ini').write('[tox]\nenvlist=py36,py27,py37,pypy\n')
     setup_cfg = tmpdir.join('setup.cfg')
@@ -726,9 +748,7 @@ def test_guess_python_requires_ignores_insufficient_version_envs(tmpdir):
         '    Programming Language :: Python :: Implementation :: CPython\n',
     )
 
-    assert not main((
-        str(setup_cfg), '--min-py-version=3.4', '--max-py-version=3.7',
-    ))
+    assert not main((str(setup_cfg),))
 
     assert setup_cfg.read() == (
         '[metadata]\n'
