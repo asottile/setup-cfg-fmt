@@ -43,7 +43,7 @@ TOX_TO_CLASSIFIERS = {
     'pypy': 'Programming Language :: Python :: Implementation :: PyPy',
 }
 
-_MIN_PY_VERSION_DEFAULT: Version = (3, 10)
+_MIN_PY_VERSION_DEFAULT: Version = (3, 11)
 
 
 class NoTransformConfigParser(configparser.RawConfigParser):
@@ -486,7 +486,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument('filenames', nargs='*')
     parser.add_argument('--include-version-classifiers', action='store_true')
     parser.add_argument('--min-py-version', type=_ver_type)
-    parser.add_argument('--max-py-version', type=_ver_type, default=(3, 14))
+    parser.add_argument('--max-py-version', type=_ver_type, default=(3, 15))
     args = parser.parse_args(argv)
 
     retv = 0
