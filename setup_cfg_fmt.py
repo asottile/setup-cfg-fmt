@@ -199,16 +199,22 @@ def _python_requires(
 
 def _requires(
         cfg: NoTransformConfigParser, which: str, section: str = 'options',
-) -> list[str]:
+) -> str:
     raw = cfg.get(section, which, fallback='')
+    # setuptools recognizes file directives only at the start of the value.
+    if which == 'install_requires' or section == 'options.extras_require':
+        if raw.startswith('file:'):
+            return raw
 
     require_group = _parse_list(raw)
     if not require_group:
-        return []
+        return ''
 
-    return sorted(
-        (_normalize_req(req) for req in require_group),
-        key=lambda req: (';' in req, _req_base(req), req),
+    return _fmt_list_always(
+        sorted(
+            (_normalize_req(req) for req in require_group),
+            key=lambda req: (';' in req, _req_base(req), req),
+        ),
     )
 
 
@@ -394,16 +400,16 @@ def format_file(
 
     install_requires = _requires(cfg, 'install_requires')
     if install_requires:
-        cfg['options']['install_requires'] = _fmt_list_always(install_requires)
+        cfg['options']['install_requires'] = install_requires
 
     setup_requires = _requires(cfg, 'setup_requires')
     if setup_requires:
-        cfg['options']['setup_requires'] = _fmt_list_always(setup_requires)
+        cfg['options']['setup_requires'] = setup_requires
 
     if cfg.has_section('options.extras_require'):
         for key in cfg['options.extras_require']:
-            cfg['options.extras_require'][key] = _fmt_list_always(
-                _requires(cfg, key, 'options.extras_require'),
+            cfg['options.extras_require'][key] = _requires(
+                cfg, key, 'options.extras_require',
             )
 
     py_classifiers = _py_classifiers(requires, max_py_version=max_py_version)

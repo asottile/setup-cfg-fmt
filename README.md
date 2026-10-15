@@ -162,6 +162,20 @@ without `--include-version-classifiers` only the major version will be included:
 +    Programming Language :: Python :: 3.6
 ```
 
+### preserves requirements file directives
+
+`file:` directives in `install_requires` and `[options.extras_require]`
+are preserved, including filename spelling and order.  Referenced files do not
+need to exist when formatting.
+
+```ini
+[options]
+install_requires = file: requirements.txt
+
+[options.extras_require]
+dev = file: requirements_dev.txt, requirements_test.txt
+```
+
 ### removes empty options in any section
 
 ```diff

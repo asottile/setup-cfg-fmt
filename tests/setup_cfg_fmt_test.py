@@ -137,6 +137,44 @@ def test_rewrite_requires(which, input_tpl, expected_tpl, tmpdir):
 
 
 @pytest.mark.parametrize(
+    ('section', 'key'),
+    (
+        ('options', 'install_requires'),
+        ('options.extras_require', 'arbitrary_extra'),
+        ('options.extras_require', 'setup_requires'),
+    ),
+)
+@pytest.mark.parametrize(
+    'value',
+    (
+        'file:requirements_dev.txt',
+        'file: requirements_dev.txt',
+        'file:\n    requirements_dev.txt',
+        'file: requirements_dev.txt, other_requirements.txt',
+        'file:\n    requirements_dev.txt, other_requirements.txt',
+        'file: z_reqs.txt, a_reqs.txt',
+        'file: requirements/dev reqs.txt',
+    ),
+)
+def test_file_requires(tmpdir, section, key, value):
+    setup_cfg = tmpdir.join('setup.cfg')
+    contents = (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        '\n'
+        f'[{section}]\n'
+        f'{key} = {value}\n'
+    )
+    setup_cfg.write(contents)
+
+    # Referenced files need not exist to format a directive.
+    assert not main((str(setup_cfg),))
+    assert setup_cfg.read() == contents
+    assert not main((str(setup_cfg),))
+
+
+@pytest.mark.parametrize(
     ('input_s', 'expected'),
     (
         pytest.param(
