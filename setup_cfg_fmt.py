@@ -147,7 +147,7 @@ def _tox_envlist(setup_cfg: str) -> Generator[str]:
     tox_ini = _adjacent_filename(setup_cfg, 'tox.ini')
     if os.path.exists(tox_ini):
         cfg = NoTransformConfigParser()
-        cfg.read(tox_ini)
+        cfg.read(tox_ini, encoding='UTF-8')
 
         envlist = cfg.get('tox', 'envlist', fallback='')
         if envlist:
@@ -163,7 +163,7 @@ def _python_requires(
         setup_cfg: str, *, min_py_version: tuple[int, int] | None,
 ) -> str | None:
     cfg = NoTransformConfigParser()
-    cfg.read(setup_cfg)
+    cfg.read(setup_cfg, encoding='UTF-8')
     current_value = cfg.get('options', 'python_requires', fallback='')
     classifiers = cfg.get('metadata', 'classifiers', fallback='')
 
@@ -341,7 +341,7 @@ def format_file(
         min_py_version: tuple[int, int] | None,
         max_py_version: tuple[int, int],
 ) -> bool:
-    with open(filename) as f:
+    with open(filename, encoding='UTF-8') as f:
         contents = f.read()
 
     cfg = NoTransformConfigParser()
@@ -451,7 +451,7 @@ def format_file(
     new_contents = new_contents.replace(' \n', '\n')
 
     if new_contents != contents:
-        with open(filename, 'w') as f:
+        with open(filename, 'w', encoding='UTF-8', newline='') as f:
             f.write(new_contents)
 
     return new_contents != contents

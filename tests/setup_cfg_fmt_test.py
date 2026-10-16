@@ -1195,3 +1195,46 @@ def test_natural_sort():
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
     ]
+
+
+def test_utf8_encoding_preserved(tmpdir):
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write_text(
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'author = René Descartes\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.11\n',
+        encoding='utf-8',
+    )
+
+    assert main((str(setup_cfg),)) == 1
+    assert not main((str(setup_cfg),))
+    assert setup_cfg.read_text(encoding='utf-8') == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        'author = René Descartes\n'
+        'classifiers =\n'
+        '    Programming Language :: Python :: 3\n'
+        '    Programming Language :: Python :: 3 :: Only\n'
+        '\n'
+        '[options]\n'
+        'python_requires = >=3.11\n'
+    )
+
+
+def test_newline_always_unix_newlines(tmpdir):
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write_binary(
+        b'[metadata]\n'
+        b'version = 1.0\n'
+        b'name = pkg\n',
+    )
+
+    assert main((str(setup_cfg),)) == 1
+    raw_bytes = setup_cfg.read_binary()
+    assert b'\r' not in raw_bytes
+    assert b'\n' in raw_bytes
