@@ -491,13 +491,17 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     retv = 0
     for filename in args.filenames:
-        if format_file(
-                filename,
-                include_version_classifiers=args.include_version_classifiers,
-                min_py_version=args.min_py_version,
-                max_py_version=args.max_py_version,
-        ):
-            print(f'Rewriting {filename}')
+        try:
+            if format_file(
+                    filename,
+                    include_version_classifiers=args.include_version_classifiers,
+                    min_py_version=args.min_py_version,
+                    max_py_version=args.max_py_version,
+            ):
+                print(f'Rewriting {filename}')
+                retv = 1
+        except OSError as e:
+            print(f'{filename}: {e.strerror or e}')
             retv = 1
     return retv
 

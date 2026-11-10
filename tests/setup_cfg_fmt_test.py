@@ -1195,3 +1195,30 @@ def test_natural_sort():
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
     ]
+
+
+def test_missing_file_reports_and_continues(tmpdir, capsys):
+    setup_cfg = tmpdir.join('setup.cfg')
+    setup_cfg.write(
+        '[metadata]\n'
+        'version = 1.0\n'
+        'name = pkg\n'
+        '\n'
+        '[bdist_wheel]\n'
+        'universal = true\n',
+    )
+    missing = str(tmpdir.join('missing.cfg'))
+
+    assert main((missing, str(setup_cfg)))
+
+    out, _ = capsys.readouterr()
+    assert missing in out
+    assert 'Traceback' not in out
+    assert setup_cfg.read() == (
+        '[metadata]\n'
+        'name = pkg\n'
+        'version = 1.0\n'
+        '\n'
+        '[bdist_wheel]\n'
+        'universal = true\n'
+    )
